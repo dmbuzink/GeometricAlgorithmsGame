@@ -54,7 +54,7 @@ public class Floorplan : MonoBehaviour
     /// </summary>
     public async Task CalculateView()
     {
-        // TODO: To be implemented by X
+        // TODO: To be implemented by Damian M. Buzink
     }
 
     /// <summary>
@@ -63,7 +63,7 @@ public class Floorplan : MonoBehaviour
     /// <returns></returns>
     public async Task<float> GetPercentageOfFloorplanInView()
     {
-        // TODO: To be implemented by X
+        // TODO: To be implemented by Damian M. Buzink
         throw new ArgumentException();
     }
 
@@ -74,7 +74,7 @@ public class Floorplan : MonoBehaviour
     /// <returns></returns>
     public async Task<bool> PathExistsFromEntranceToDesiredObject()
     {
-        // TODO: To be implemented by X
+        // TODO: To be implemented by Teun van Zon
         throw new ArgumentException();
     }
 }

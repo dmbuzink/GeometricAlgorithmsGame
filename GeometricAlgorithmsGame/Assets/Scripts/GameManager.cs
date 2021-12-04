@@ -32,7 +32,7 @@ public class GameManager : MonoBehaviour
     /// </summary>
     private async Task PlaceCamera()
     {
-        // TODO: To be implemented by x
+        // TODO: To be implemented by Damian M. Buzink
         throw new NotImplementedException();
     }
 
@@ -42,7 +42,7 @@ public class GameManager : MonoBehaviour
     /// </summary>
     private async Task ConfirmAllCameras()
     {
-        // TODO: To be implemented by x
+        // TODO: To be implemented by Damian M. Buzink
         throw new NotImplementedException();
     }
 
@@ -51,7 +51,7 @@ public class GameManager : MonoBehaviour
     /// </summary>
     private void ShowSuccessScreen()
     {
-        // TODO: To be implemented by x
+        // TODO: To be implemented by Teun van Zon
         throw new NotImplementedException();
     }
 
@@ -60,7 +60,7 @@ public class GameManager : MonoBehaviour
     /// </summary>
     private void ShowFailureScreen()
     {
-        // TODO: To be implemented by x
+        // TODO: To be implemented by Teun van Zon
         throw new NotImplementedException();
     }
 }

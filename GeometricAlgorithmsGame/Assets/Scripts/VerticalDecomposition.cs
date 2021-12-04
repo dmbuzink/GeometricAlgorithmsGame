@@ -14,7 +14,7 @@ namespace DefaultNamespace
         /// <returns></returns>
         public Edge GetEdge(Vertex vertex)
         {
-            // TODO: To be implemented by X
+            // TODO: To be implemented by Tar van Krieken
             throw new NotImplementedException();
         }
 
@@ -25,7 +25,7 @@ namespace DefaultNamespace
         /// <returns></returns>
         public static async Task<VerticalDecomposition> CreateVerticalDecomposition(IEnumerable<PolygonVertex> vertices)
         {
-            // TODO: To be implemented by X
+            // TODO: To be implemented by Tar van Krieken
             throw new NotImplementedException();
         }
     }

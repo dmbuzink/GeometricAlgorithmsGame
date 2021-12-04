@@ -51,7 +51,7 @@ public class Camera : MonoBehaviour
     /// <returns></returns>
     public async Task<IEnumerable<PolygonVertex>> CalculateView(Floorplan floorplan)
     {
-        // TODO: To be implemented by X
+        // TODO: To be implemented by Damian M. Buzink
         throw new NotImplementedException();
     }
 }
