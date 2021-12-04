@@ -10,7 +10,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private string _levelConfigJson;
     [SerializeField] private Camera _cameraPrefab;
     [SerializeField] private Floorplan _floorplan; 
-    private Camera currentCamera;
+    private Camera _currentCamera;
     private LevelConfig _levelConfig;
 
 
