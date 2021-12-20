@@ -3,56 +3,188 @@ using System.Collections.Generic;
 
 namespace DefaultNamespace
 {
-    public class BinarySearchTree<T>
+    public class BinarySearchTree<D>
     {
-        private BinaryNode<T> _root;
+        private BinaryNode<D> root;
+        private readonly Func<D, D, int> compare;
 
-        public BinarySearchTree(IEnumerable<BinaryNode<T>> nodes)
+        /// <summary>
+        /// Creates a new self balancing binary search using the given comparison function to sort items
+        /// </summary>
+        /// <param name="compare">The data comparison function, result < 0 iff a < b, result > 0 iff a > b, result = 0 otherwise</param>
+        public BinarySearchTree(Func<D, D, int> compare)
         {
-            // TODO: To be implemented by Tar van Krieken
-            throw new NotImplementedException();
+            this.compare = compare;
         }
 
-        public void Clear()
+        /// <summary>
+        /// Inserts the given data element
+        /// </summary>
+        /// <param name="data">The data element to be inserted</param>
+        public void Insert(D data)
         {
-            // TODO: To be implemented by Tar van Krieken
-            throw new NotImplementedException();
+            if (this.root == null) this.root = new BinaryNode<D>(data, this.compare);
+            else this.root = this.root.Insert(data);
         }
 
-        public bool Contains(T value)
+        /// <summary>
+        /// Deletes the given data element
+        /// </summary>
+        /// <param name="data">The data element to be deleted</param>
+        public void Delete(D data)
         {
-            // TODO: To be implemented by Tar van Krieken
-            throw new NotImplementedException();
+            if (this.root == null) return;
+            this.root = this.root.Delete(data);
         }
 
-        public T Find(T value)
+        /// <summary>
+        /// Deletes the given data element
+        /// </summary>
+        /// <param name="compare">The data comparison function, result < 0 iff query < item, result > 0 iff query > item, result = 0 otherwise</param>
+        public void Delete(Func<D, int> compare)
         {
-            // TODO: To be implemented by Tar van Krieken
-            throw new NotImplementedException();
+            if (this.root == null) return;
+            this.root = this.root.Delete(compare);
         }
 
-        public T FindMin()
+        /// <summary>
+        /// Checks whether the given data element is in the tree
+        /// </summary>
+        /// <param name="data">The data element to find</param>
+        /// <returns>The data element that was found, if any</returns>
+        public D Find(D data)
         {
-            // TODO: To be implemented by Tar van Krieken
-            throw new NotImplementedException();
+            return this.root != null ? this.root.Find(data) : default(D);
         }
 
-        public T FindMax()
+        /// <summary>
+        /// Tries to find a data element according to the given comparison function
+        /// </summary>
+        /// <param name="compare">The data comparison function, result < 0 iff query < item, result > 0 iff query > item, result = 0 otherwise</param>
+        /// <returns>The data element that was found, if any</returns>
+        public D Find(Func<D, int> compare)
         {
-            // TODO: To be implemented by Tar van Krieken
-            throw new NotImplementedException();
+            return this.root != null ? this.root.Find(compare) : default(D);
         }
 
-        public void Insert(T value)
+        /// <summary>
+        /// Finds the smallest element that's larger than the given element
+        /// </summary>
+        /// <param name="data">The data element to find</param>
+        /// <returns>The data element that was found, if any</returns>
+        public D FindNext(D data)
         {
-            // TODO: To be implemented by Tar van Krieken
-            throw new NotImplementedException();
+            if (this.root != null)
+            {
+                Nullable<D> item = this.root.FindNext(data);
+                if (item != null) return item.val;
+            }
+
+            return default(D);
         }
 
-        public void Delete(T value)
+        /// <summary>
+        /// Finds the smallest element that's bigger than the one specified by the given comparison function
+        /// </summary>
+        /// <param name="compare">The data comparison function, result < 0 iff query < item, result > 0 iff query > item, result = 0 otherwise</param>
+        /// <returns>The data element that was found, if any</returns>
+        public D FindNext(Func<D, int> compare)
         {
-            // TODO: To be implemented by Tar van Krieken
-            throw new NotImplementedException();
+            if (this.root != null)
+            {
+                Nullable<D> item = this.root.FindNext(compare);
+                if (item != null) return item.val;
+            }
+
+            return default(D);
+        }
+
+        /// <summary>
+        /// Finds the largest element that's smaller than the given element
+        /// </summary>
+        /// <param name="data">The data element to find</param>
+        /// <returns>The data element that was found, if any</returns>
+        public D FindPrevious(D data)
+        {
+
+            if (this.root != null)
+            {
+                Nullable<D> item = this.root.FindPrevious(data);
+                if (item != null) return item.val;
+            }
+
+            return default(D);
+        }
+
+        /// <summary>
+        /// Finds the largest element that's smaller than the one specified by the given comparison function
+        /// </summary>
+        /// <param name="compare">The data comparison function, result < 0 iff query < item, result > 0 iff query > item, result = 0 otherwise</param>
+        /// <returns>The data element that was found, if any</returns>
+        public D FindPrevious(Func<D, int> compare)
+        {
+            if (this.root != null)
+            {
+                Nullable<D> item = this.root.FindPrevious(compare);
+                if (item != null) return item.val;
+            }
+
+            return default(D);
+        }
+
+        /// <summary>
+        /// Finds a range of data elements that's between the start and end
+        /// </summary>
+        /// <param name="start">The element marking the start of the range</param>
+        /// <param name="end">The element marking the end of the range</param>
+        /// <returns>The data elements that were found</returns>
+        public List<D> FindRange(D start, D end)
+        {
+            List<D> output = new List<D>();
+            this.root?.FindRange(start, end, output);
+            return output;
+        }
+
+        /// <summary>
+        /// Finds a range of element that's between the start and end comparison functions
+        /// </summary>
+        /// <param name="start">The data comparison function for the start of the range, result < 0 iff query < item, result > 0 iff query > item, result = 0 otherwise</param>
+        /// <param name="end">The data comparison function for the end of the range, result < 0 iff query < item, result > 0 iff query > item, result = 0 otherwise</param>
+        /// <returns> The data elements that were found</returns>
+        public List<D> FindRange(Func<D, int> start, Func<D, int> end)
+        {
+            List<D> output = new List<D>();
+            this.root?.FindRange(start, end, output);
+            return output;
+        }
+
+        /// <summary>
+        /// Retrieves the smallest item in the tree
+        /// </summary>
+        /// <returns>The minimal element, if the tree isn't empty</returns>
+        public D GetMin()
+        {
+            return this.root != null ? this.root.GetMin() : default(D);
+        }
+
+        /// <summary>
+        /// Retrieves the largest item in the tree
+        /// </summary>
+        /// <returns>The maximal element, if the tree isn't empty</returns>
+        public D GetMax()
+        {
+            return this.root != null ? this.root.GetMax() : default(D);
+        }
+
+        /// <summary>
+        /// Retrieves all the items in the tree
+        /// </summary>
+        /// <returns>All the stored items</returns>
+        public List<D> GetAll()
+        {
+            List<D> output = new List<D>();
+            this.root?.GetAll(output);
+            return output;
         }
     }
 }
