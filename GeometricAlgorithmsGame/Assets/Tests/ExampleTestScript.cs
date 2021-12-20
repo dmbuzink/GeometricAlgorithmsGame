@@ -43,5 +43,11 @@ namespace Tests
             Assert.False(result);
             Assert.AreEqual(expected: false, actual: result);
         }
+
+        [TearDown]
+        public void TearDown()
+        {
+            // Stuff that needs to be stopped or removed or whatever
+        }
     }
 }
