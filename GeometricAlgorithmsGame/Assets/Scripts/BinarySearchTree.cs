@@ -5,7 +5,7 @@ namespace DefaultNamespace
 {
     public class BinarySearchTree<D>
     {
-        private BinaryNode<D> root;
+        protected BinaryNode<D> root;
         private readonly Func<D, D, int> compare;
 
         /// <summary>
