@@ -10,11 +10,11 @@ public class Floorplan : MonoBehaviour
     [SerializeField] private static Floorplan _floorplanPrefab;
     private VerticalDecomposition _verticalDecomposition;
     private IEnumerable<Camera> _cameras = new List<Camera>();
-    private IEnumerable<PolygonVertex> _polygonVertices;
+    private IEnumerable<SimplePolygon> _polygonVertices;
     private DesiredObject _desiredObject;
     private Entrance _entrance;
 
-    public Floorplan(IEnumerable<PolygonVertex> polygonVertices, DesiredObject desiredObject, Entrance entrance)
+    public Floorplan(IEnumerable<SimplePolygon> polygonVertices, DesiredObject desiredObject, Entrance entrance)
     {
         this._polygonVertices = polygonVertices;
         this._desiredObject = desiredObject;
@@ -27,7 +27,7 @@ public class Floorplan : MonoBehaviour
     /// <param name="polygonVertices"></param>
     /// <param name="desiredObject"></param>
     /// <param name="entrance"></param>
-    public static async Task Create(IEnumerable<PolygonVertex> polygonVertices, DesiredObject desiredObject,
+    public static async Task Create(IEnumerable<SimplePolygon> polygonVertices, DesiredObject desiredObject,
         Entrance entrance)
     {
         var createdFloorplan = Instantiate(_floorplanPrefab);

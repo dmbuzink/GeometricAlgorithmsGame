@@ -23,7 +23,7 @@ namespace DefaultNamespace
         /// </summary>
         /// <param name="vertices"></param>
         /// <returns></returns>
-        public static async Task<VerticalDecomposition> CreateVerticalDecomposition(IEnumerable<PolygonVertex> vertices)
+        public static async Task<VerticalDecomposition> CreateVerticalDecomposition(IEnumerable<SimplePolygon> vertices)
         {
             // TODO: To be implemented by Tar van Krieken
             throw new NotImplementedException();
