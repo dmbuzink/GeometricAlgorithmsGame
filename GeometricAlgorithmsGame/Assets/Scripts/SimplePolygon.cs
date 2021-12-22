@@ -20,9 +20,9 @@ public class SimplePolygon
     /// Creates a new simple polygon given a list of vertices
     /// </summary>
     /// <param name="points">The vertices points of the polygon, in counter clockwise order</param>
-    public SimplePolygon(Vertex[] points)
+    public SimplePolygon(IEnumerable<Vertex> points)
     {
-        this.Vertices = points;
+        this.Vertices = points.ToArray();
     }
 
     /// <summary>

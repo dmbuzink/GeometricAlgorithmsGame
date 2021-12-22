@@ -42,6 +42,8 @@ namespace DefaultNamespace
         public int LevelId;
         public Vertex Entrance { get; set; }
         public Vertex DesiredObject { get; set; }
-        public IEnumerable<PolygonVertex> polygonVertices { get; set; }
+        public IEnumerable<Vertex> Vertices { get; set; }
+
+        public SimplePolygon GetSimplePolygon() => new SimplePolygon(Vertices);
     }
 }

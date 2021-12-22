@@ -1,0 +1,16 @@
+{
+  "levelId": 0,
+  "entrance": {
+    "X": 5.1,
+    "Y": 5
+  }, 
+  "desiredObject": {
+    "X": 12,
+    "Y": 2.5
+  },
+  "polygonVertices": [
+    {
+      "X"
+    }
+  ]
+}

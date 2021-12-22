@@ -17,4 +17,6 @@ public class Vertex
     }
 
     public (double x, double y) GetCoordinates() => (X, Y);
+
+    public Vector3 ToVector3() => new Vector3((float) X, (float) Y);
 }

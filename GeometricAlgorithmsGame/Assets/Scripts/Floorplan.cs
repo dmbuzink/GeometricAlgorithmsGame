@@ -1,18 +1,19 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using DefaultNamespace;
 using UnityEngine;
 
 public class Floorplan : MonoBehaviour
 {
-    [SerializeField] private static Floorplan _floorplanPrefab;
     private VerticalDecomposition _verticalDecomposition;
     private IEnumerable<Camera> _cameras = new List<Camera>();
     public SimplePolygon SimplePolygon;
-    private DesiredObject _desiredObject;
-    private Entrance _entrance;
+    [SerializeField] private DesiredObject _desiredObject;
+    [SerializeField] private Entrance _entrance;
+    private LineRenderer _lineRenderer;
 
     public Floorplan(SimplePolygon simplePolygon, DesiredObject desiredObject, Entrance entrance)
     {
@@ -24,29 +25,48 @@ public class Floorplan : MonoBehaviour
     /// <summary>
     /// Initiates a floorplan prefab with some arguments.
     /// </summary>
-    /// <param name="polygonVertices"></param>
+    /// <param name="simplePolygon"></param>
     /// <param name="desiredObject"></param>
     /// <param name="entrance"></param>
-    public static async Task Create(SimplePolygon polygonVertices, DesiredObject desiredObject,
-        Entrance entrance)
+    public async Task SetUp(SimplePolygon simplePolygon, Vertex desiredObjectVertex,
+        Vertex entranceVertex)
     {
-        var createdFloorplan = Instantiate(_floorplanPrefab);
-        createdFloorplan.SimplePolygon = polygonVertices;
-        createdFloorplan._desiredObject = desiredObject;
-        createdFloorplan._entrance = entrance;
-        createdFloorplan._verticalDecomposition = await VerticalDecomposition.
-            CreateVerticalDecomposition(createdFloorplan.SimplePolygon); 
+        SimplePolygon = simplePolygon;
+        // createdFloorplan._desiredObject = desiredObject;
+        // createdFloorplan._entrance = entrance;
+        _verticalDecomposition = await VerticalDecomposition.
+            CreateVerticalDecomposition(SimplePolygon);
     }
 
     // Start is called before the first frame update
-    async void Start()
+    void Start()
     {
+        // this._lineRenderer = gameObject.AddComponent<LineRenderer>();
+        this._lineRenderer = gameObject.GetComponent<LineRenderer>();
+        this._lineRenderer.loop = true;
+        this._lineRenderer.startWidth = 0.1f;
+        this._lineRenderer.endWidth = 0.1f;
+        this._lineRenderer.startColor = Color.blue;
+        this._lineRenderer.endColor = Color.blue;
+        StartCoroutine(DrawFloorplan());
     }
 
     // Update is called once per frame
     void Update()
     {
         
+    }
+    
+    private IEnumerator DrawFloorplan()
+    {
+        this._lineRenderer.positionCount = SimplePolygon.Vertices.Length;
+        for (var i = 0; i < SimplePolygon.Vertices.Length; i++)
+        {
+            var vertex = SimplePolygon.Vertices.ElementAt(i);
+            this._lineRenderer.SetPosition(i, vertex.ToVector3());
+        }
+
+        yield return null;
     }
 
     /// <summary>
