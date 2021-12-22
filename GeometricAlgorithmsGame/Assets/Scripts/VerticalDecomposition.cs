@@ -21,9 +21,9 @@ namespace DefaultNamespace
         /// <summary>
         /// Creates a vertical decomposition of the given polygon
         /// </summary>
-        /// <param name="vertices"></param>
+        /// <param name="simplePolygon"></param>
         /// <returns></returns>
-        public static async Task<VerticalDecomposition> CreateVerticalDecomposition(IEnumerable<SimplePolygon> vertices)
+        public static async Task<VerticalDecomposition> CreateVerticalDecomposition(SimplePolygon simplePolygon)
         {
             // TODO: To be implemented by Tar van Krieken
             throw new NotImplementedException();

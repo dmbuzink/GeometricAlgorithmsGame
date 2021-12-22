@@ -1,9 +1,9 @@
+using System.Collections.Generic;
+using System.Linq;
 
-using System.Collections;
-
-public class SimplePolygon : IEnumerable
+public class SimplePolygon
 {
-    public Vertex[] vertices { get; private set; }
+    public Vertex[] Vertices { get; private set; }
 
     /// <summary>
     /// Creates a new simple polygon given a list of alternating x and y coordinates
@@ -11,9 +11,9 @@ public class SimplePolygon : IEnumerable
     /// <param name="points">The coordinates of the points of the polygon, in counter clockwise order</param>
     public SimplePolygon(double[] points)
     {
-        this.vertices = new Vertex[points.Length / 2];
+        this.Vertices = new Vertex[points.Length / 2];
         for (int i = 0; i < points.Length-1; i += 2)
-            vertices[i / 2] = new Vertex(points[i], points[i + 1]);
+            Vertices[i / 2] = new Vertex(points[i], points[i + 1]);
     }
 
     /// <summary>
@@ -22,12 +22,21 @@ public class SimplePolygon : IEnumerable
     /// <param name="points">The vertices points of the polygon, in counter clockwise order</param>
     public SimplePolygon(Vertex[] points)
     {
-        this.vertices = points;
+        this.Vertices = points;
     }
-    
 
-    IEnumerator IEnumerable.GetEnumerator()
-    {
-        return vertices.GetEnumerator();
+    /// <summary>
+    /// Get the vertices pair-wise. So with vertices: v1 -> v2 -> v3 -> v1.
+    /// You get: (v1, v2), (v2, v3), (v3, v1)
+    /// </summary>
+    /// <returns></returns>
+    public IEnumerable<(Vertex v1, Vertex v2)> GetVerticesPairWise()
+    { 
+        var pairs = new List<(Vertex v1, Vertex v2)>();
+        for (var i = 0; i < Vertices.Length; i++)
+        {
+            pairs.Add((Vertices.ElementAt(i), Vertices.ElementAt(i % Vertices.Length)));
+        }
+        return pairs;
     }
 }

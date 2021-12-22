@@ -10,13 +10,13 @@ public class Floorplan : MonoBehaviour
     [SerializeField] private static Floorplan _floorplanPrefab;
     private VerticalDecomposition _verticalDecomposition;
     private IEnumerable<Camera> _cameras = new List<Camera>();
-    private IEnumerable<SimplePolygon> _polygonVertices;
+    public SimplePolygon SimplePolygon;
     private DesiredObject _desiredObject;
     private Entrance _entrance;
 
-    public Floorplan(IEnumerable<SimplePolygon> polygonVertices, DesiredObject desiredObject, Entrance entrance)
+    public Floorplan(SimplePolygon simplePolygon, DesiredObject desiredObject, Entrance entrance)
     {
-        this._polygonVertices = polygonVertices;
+        this.SimplePolygon = simplePolygon;
         this._desiredObject = desiredObject;
         this._entrance = entrance;
     }
@@ -27,15 +27,15 @@ public class Floorplan : MonoBehaviour
     /// <param name="polygonVertices"></param>
     /// <param name="desiredObject"></param>
     /// <param name="entrance"></param>
-    public static async Task Create(IEnumerable<SimplePolygon> polygonVertices, DesiredObject desiredObject,
+    public static async Task Create(SimplePolygon polygonVertices, DesiredObject desiredObject,
         Entrance entrance)
     {
         var createdFloorplan = Instantiate(_floorplanPrefab);
-        createdFloorplan._polygonVertices = polygonVertices;
+        createdFloorplan.SimplePolygon = polygonVertices;
         createdFloorplan._desiredObject = desiredObject;
         createdFloorplan._entrance = entrance;
         createdFloorplan._verticalDecomposition = await VerticalDecomposition.
-            CreateVerticalDecomposition(createdFloorplan._polygonVertices); 
+            CreateVerticalDecomposition(createdFloorplan.SimplePolygon); 
     }
 
     // Start is called before the first frame update
