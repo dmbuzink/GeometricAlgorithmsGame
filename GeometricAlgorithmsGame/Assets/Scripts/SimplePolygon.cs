@@ -1,7 +1,8 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
-public class SimplePolygon
+public class SimplePolygon : IEnumerable<Vertex>
 {
     public Vertex[] Vertices { get; private set; }
 
@@ -39,4 +40,8 @@ public class SimplePolygon
         }
         return pairs;
     }
+
+    public IEnumerator<Vertex> GetEnumerator() => this.Vertices.AsEnumerable().GetEnumerator();
+
+    IEnumerator IEnumerable.GetEnumerator() => this.Vertices.GetEnumerator();
 }

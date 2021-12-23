@@ -59,10 +59,10 @@ public class Floorplan : MonoBehaviour
     
     private IEnumerator DrawFloorplan()
     {
-        this._lineRenderer.positionCount = SimplePolygon.Vertices.Length;
-        for (var i = 0; i < SimplePolygon.Vertices.Length; i++)
+        this._lineRenderer.positionCount = SimplePolygon.Count();
+        for (var i = 0; i < SimplePolygon.Count(); i++)
         {
-            var vertex = SimplePolygon.Vertices.ElementAt(i);
+            var vertex = SimplePolygon.ElementAt(i);
             this._lineRenderer.SetPosition(i, vertex.ToVector3());
         }
 
