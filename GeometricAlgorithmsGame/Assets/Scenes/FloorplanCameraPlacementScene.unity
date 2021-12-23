@@ -235,7 +235,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7ad2e7cd168a10e45a91e96cf1db626e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  CameraMargin: 1
   CameraSizeMargin: 1
   FloorplanPrefab: {fileID: 3859917397781596429, guid: cea0a253d7ea0a142ab870595ef78388, type: 3}
   _levelConfigJson: 

@@ -32,8 +32,8 @@ public class Floorplan : MonoBehaviour
         Vertex entranceVertex)
     {
         SimplePolygon = simplePolygon;
-        // createdFloorplan._desiredObject = desiredObject;
-        // createdFloorplan._entrance = entrance;
+        _entrance.transform.position = new Vector3((float)entranceVertex.X, (float)entranceVertex.Y);
+        _desiredObject.transform.position = new Vector3((float) desiredObjectVertex.X, (float) desiredObjectVertex.Y);
         _verticalDecomposition = await VerticalDecomposition.
             CreateVerticalDecomposition(SimplePolygon);
     }
