@@ -1,6 +1,4 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using DefaultNamespace;
@@ -14,8 +12,11 @@ public class GameManager : MonoBehaviour
     [SerializeField] private Camera _cameraPrefab;
     [SerializeField] private Floorplan _floorplan;
     [SerializeField] private UnityEngine.Camera _unityCamera;
+    [SerializeField] private CameraPlacer _cameraPlacer;
+    [SerializeField] private GameObject _addCameraButton;
     private Camera _currentCamera;
     private LevelConfig _levelConfig;
+    private Vector3 _centerPointOfWorld;
 
 
     // Start is called before the first frame update
@@ -25,6 +26,8 @@ public class GameManager : MonoBehaviour
             ? GetDefaultLevelConfig()
             : LevelConfigManager.GetSelectedLevelConfig(this._levelConfigJson);
 
+        this._cameraPlacer.OnCameraRemoved += this.HandleCameraDeletion;
+        this._cameraPlacer.OnActivityChange += cameraPlacerIsActive => this._addCameraButton.SetActive(!cameraPlacerIsActive);
         await SetUnityCamera();
         await InstantiateFloorplan();
     }
@@ -70,9 +73,25 @@ public class GameManager : MonoBehaviour
         this._unityCamera.gameObject.transform.localPosition = new Vector3( (float)(minX + halfXRange), 
             (float) (minY + halfYRange), -10);
         this._unityCamera.orthographicSize = cameraSize + CameraSizeMargin;
+
+        this._centerPointOfWorld =
+            UnityEngine.Camera.main.ScreenToWorldPoint(new Vector3(Screen.width / 2, Screen.height / 2));
+        this._centerPointOfWorld.z = 0;
     }
-    
-    
+
+    public void AddCamera()
+    {
+        this._cameraPlacer.gameObject.transform.position = _centerPointOfWorld;
+        this._cameraPlacer.gameObject.transform.rotation = Quaternion.Euler(new Vector3(0, 0, 0));
+        var newCamera = Instantiate(this._cameraPrefab, _cameraPlacer.transform);
+        this._floorplan.AddCamera(newCamera);
+        this._cameraPlacer.SetCamera(newCamera);
+    }
+
+    public void HandleCameraDeletion(Camera cam)
+    {
+        this._floorplan.RemoveCamera(cam);
+    }
 
     /// <summary>
     /// Confirms the location of the current camera and add it to the floorplan

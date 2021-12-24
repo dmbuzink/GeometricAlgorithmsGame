@@ -9,7 +9,7 @@ using UnityEngine;
 public class Floorplan : MonoBehaviour
 {
     private VerticalDecomposition _verticalDecomposition;
-    private IEnumerable<Camera> _cameras = new List<Camera>();
+    private List<Camera> _cameras;
     public SimplePolygon SimplePolygon;
     [SerializeField] private DesiredObject _desiredObject;
     [SerializeField] private Entrance _entrance;
@@ -41,6 +41,7 @@ public class Floorplan : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        this._cameras = new List<Camera>();
         // this._lineRenderer = gameObject.AddComponent<LineRenderer>();
         this._lineRenderer = gameObject.GetComponent<LineRenderer>();
         this._lineRenderer.loop = true;
@@ -96,5 +97,15 @@ public class Floorplan : MonoBehaviour
     {
         // TODO: To be implemented by Teun van Zon
         throw new ArgumentException();
+    }
+
+    public void AddCamera(Camera cam)
+    {
+        this._cameras.Add(cam);
+    }
+
+    public void RemoveCamera(Camera cam)
+    {
+        this._cameras.Remove(cam);
     }
 }
