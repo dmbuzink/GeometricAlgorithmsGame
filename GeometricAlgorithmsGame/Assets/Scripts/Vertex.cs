@@ -35,8 +35,17 @@ public class Vertex
         await Task.Run(() => Math.Sign((endPoint.X - startPoint.X) * (Y - startPoint.Y) -
                                             (endPoint.Y - startPoint.Y) * (X - startPoint.X)));
 
+    /// <summary>
+    /// Returns true if the difference between the x coordinates and y coordinates is under epsilon
+    /// </summary>
+    /// <param name="v"></param>
+    /// <returns></returns>
     public bool SamePositionAs(Vertex v) => 
         Math.Abs(this.X - v.X) < Mathf.Epsilon && Math.Abs(this.Y - v.Y) < Mathf.Epsilon;
 
+    /// <summary>
+    /// Creates a deep copy of the vertex
+    /// </summary>
+    /// <returns></returns>
     public Vertex Copy() => new Vertex(X, Y);
 }

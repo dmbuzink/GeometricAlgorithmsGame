@@ -113,11 +113,19 @@ public class Floorplan : MonoBehaviour
         throw new ArgumentException();
     }
 
+    /// <summary>
+    /// Adds the given camera to the set of stored cameras.
+    /// </summary>
+    /// <param name="cam"></param>
     public void AddCamera(Camera cam)
     {
         this._cameras.Add(cam);
     }
 
+    /// <summary>
+    /// Removes the given camera from the set of stored cameras.
+    /// </summary>
+    /// <param name="cam"></param>
     public void RemoveCamera(Camera cam)
     {
         this._cameras.Remove(cam);

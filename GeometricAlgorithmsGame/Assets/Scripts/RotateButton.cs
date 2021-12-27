@@ -9,24 +9,26 @@ public class RotateButton : MonoBehaviour
     private Vector3 _dragOffset;
     [SerializeField] private GameObject _cameraPlacer;
     private float _prevAngle;
-
+    
     private void OnMouseDown()
     {
         this._prevAngle = GeometricHelper.AngleBetweenPoints(Camera.transform.position, GetMousePosition());
     }
 
+    /// <summary>
+    /// OnMouseDrag event which handles the rotation based on the player's dragging actions.
+    /// </summary>
     private void OnMouseDrag()
     {
-        // var rotation = GeometricHelper.AngleBetweenPoints(this.transform.position, GetMousePosition());
-        // this._cameraPlacer.transform.rotation = Quaternion.Euler(new Vector3(0f, 0f, rotation));
-        // this._collider.transform.rotation = Quaternion.Euler(new Vector3(0f, 0f, rotation));
-        // this._cameraPlacer.transform.LookAt(GetMousePosition());
-        
         var currentAngle = GeometricHelper.AngleBetweenPoints(Camera.transform.position, GetMousePosition());
         this._cameraPlacer.transform.Rotate(new Vector3(0f, 0f, currentAngle - _prevAngle));
         this._prevAngle = currentAngle;
     }
 
+    /// <summary>
+    /// Gets the mouse position in world space.
+    /// </summary>
+    /// <returns></returns>
     private Vector3 GetMousePosition()
     {
         var inputMousePosition = Input.mousePosition;

@@ -85,6 +85,9 @@ public class GameManager : MonoBehaviour
         this._centerPointOfWorld.z = 0;
     }
 
+    /// <summary>
+    /// Instantiates a new camera and makes it available for the player to modify.
+    /// </summary>
     public void AddCamera()
     {
         this._cameraPlacer.gameObject.transform.position = _centerPointOfWorld;
@@ -98,12 +101,20 @@ public class GameManager : MonoBehaviour
         newCamera.SetColliderActive(false);
     }
 
-    public void HandleCameraDeletion(Camera cam)
+    /// <summary>
+    /// Handles the deletion of the currently selected camera.
+    /// </summary>
+    /// <param name="cam"></param>
+    private void HandleCameraDeletion(Camera cam)
     {
         cam.onSelected -= HandleSelectionOfCamera;
         this._floorplan.RemoveCamera(cam);
     }
 
+    /// <summary>
+    /// Handles the selection of a camera by the player.
+    /// </summary>
+    /// <param name="cam"></param>
     private void HandleSelectionOfCamera(Camera cam)
     {
         this._currentCamera = cam;
@@ -111,15 +122,6 @@ public class GameManager : MonoBehaviour
         this._floorplan.ActivateSelectionColliderOfAllCameras();
         cam.SetColliderActive(false);
         cam.gameObject.transform.SetParent(this._cameraPlacer.gameObject.transform);
-    }
-
-    /// <summary>
-    /// Confirms the location of the current camera and add it to the floorplan
-    /// </summary>
-    private async Task PlaceCamera()
-    {
-        // TODO: To be implemented by Damian M. Buzink
-        throw new NotImplementedException();
     }
 
     /// <summary>
@@ -150,7 +152,10 @@ public class GameManager : MonoBehaviour
         throw new NotImplementedException();
     }
 
-
+    /// <summary>
+    /// Gets the configuration for the default level.
+    /// </summary>
+    /// <returns></returns>
     private LevelConfig GetDefaultLevelConfig()
     {
         var entrance = new Vertex(11.7, 7);

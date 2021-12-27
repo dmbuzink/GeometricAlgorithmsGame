@@ -22,7 +22,6 @@ public class CameraPlacer : MonoBehaviour
     [SerializeField] private RotateButton _rotateButton;
     private Vector3 _dragOffset;
     private Camera _camera;
-    private Material _spriteRendererMaterialOfCamera;
     private Floorplan _floorplan;
     
     // Start is called before the first frame update
@@ -57,9 +56,12 @@ public class CameraPlacer : MonoBehaviour
         this._rotateButton.Camera = cam;
         this.OnActivityChange?.Invoke(true);
         this.gameObject.SetActive(true);
-        this._spriteRendererMaterialOfCamera = cam.GetComponent<SpriteRenderer>().material;
     }
 
+    /// <summary>
+    /// Sets the floorplan
+    /// </summary>
+    /// <param name="fp"></param>
     public void SetFloorplan(Floorplan fp)
     {
         this._floorplan = fp;
@@ -114,6 +116,11 @@ public class CameraPlacer : MonoBehaviour
 
     private Vertex _lastValidatedPosition;
     private bool _lastPositionValidity;
+    /// <summary>
+    /// Validates the position of the camera currently. Uses caching when 'onlyIfNewPosition' is true.
+    /// </summary>
+    /// <param name="onlyIfNewPosition"></param>
+    /// <returns></returns>
     public async Task<bool> ValidatePosition(bool onlyIfNewPosition = true)
     {
         var camPositionVector = this._camera.gameObject.transform.position;
@@ -126,16 +133,14 @@ public class CameraPlacer : MonoBehaviour
         this._camera.Position = new Vertex(camPositionVector.x, camPositionVector.y);
         _lastPositionValidity = await this._floorplan.SimplePolygon.PointIsWithinPolygonAsync(this._camera.Position);
         _lastValidatedPosition = this._camera.Position.Copy();
-        SetPositionValidity(_lastPositionValidity);
         this.SetConfirmButtonActive(_lastPositionValidity);
         return _lastPositionValidity;
     }
 
-    private void SetPositionValidity(bool isValid)
-    {
-        this._spriteRendererMaterialOfCamera.color = isValid ? Color.black : Color.red;
-    }
-
+    /// <summary>
+    /// Sets the confirm button to active or inactive depending on the parameter.
+    /// </summary>
+    /// <param name="isActive"></param>
     private void SetConfirmButtonActive(bool isActive)
     {
         this._confirmButton.gameObject.SetActive(isActive);

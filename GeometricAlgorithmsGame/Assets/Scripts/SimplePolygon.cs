@@ -51,19 +51,10 @@ public class SimplePolygon : IEnumerable<Vertex>
     IEnumerator IEnumerable.GetEnumerator() => this.Vertices.GetEnumerator();
 
     /// <summary>
-    /// Return true if the point is within the convex polygon.
+    /// Asynchronously checks to see if the given point is in the polygon.
     /// </summary>
     /// <param name="point"></param>
     /// <returns></returns>
-    public async Task<bool> PointIsWithinConvexPolygon(Vertex point)
-    {
-        // TODO: REMOVE AT SOME POINT DAMIAN
-        var lineCheckTasks = GetVerticesPairWise().Select(pair => point.GetSideOfLine(pair.v1, pair.v2));
-        var lineChecks = await Task.WhenAll(lineCheckTasks);
-        // return lineChecks.All(orientation => orientation == 1);
-        return !lineChecks.Any(orientation => orientation < 1);
-    }
-
     public async Task<bool> PointIsWithinPolygonAsync(Vertex point)
     {
         // TODO: Remove this reference and write in the report something about this.
@@ -87,6 +78,10 @@ public class SimplePolygon : IEnumerable<Vertex>
         return numberOfIntersections % 2 == 1;
     }
 
+    /// <summary>
+    /// Gets the maximum X coordinates of the polygon.
+    /// </summary>
+    /// <returns></returns>
     public float GetMaxXOfPolygon()
     {
         if (this._maxX is null)
