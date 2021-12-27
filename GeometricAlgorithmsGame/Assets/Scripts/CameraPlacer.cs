@@ -139,7 +139,6 @@ public class CameraPlacer : MonoBehaviour
         }
 
         this._camera.Position = new Vertex(camPositionVector.x, camPositionVector.y);
-        // _lastPositionValidity = await this._floorplan.SimplePolygon.PointIsWithinPolygonAsync(this._camera.Position);
         var isWithinPolygon = await this._floorplan.SimplePolygon.PointIsWithinPolygonAsync(this._camera.Position);
         var notTooCloseToOtherCamera = this._floorplan.Cameras.All(c => c.Equals(_camera) ||
             GeometricHelper.GetDistanceBetweenTwoPoints(_camera.Position, c.Position) > _minimumDistanceToOtherCamera);
