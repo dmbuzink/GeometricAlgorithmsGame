@@ -14,6 +14,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private UnityEngine.Camera _unityCamera;
     [SerializeField] private CameraPlacer _cameraPlacer;
     [SerializeField] private GameObject _addCameraButton;
+    [SerializeField] private GameObject _confirmAllCamerasButton;
     private Camera _currentCamera;
     private LevelConfig _levelConfig;
     private Vector3 _centerPointOfWorld;
@@ -30,7 +31,6 @@ public class GameManager : MonoBehaviour
         this._cameraPlacer.OnCameraConfirmed += async cam =>
         {
             var camIsValid = await this._floorplan.SimplePolygon.PointIsWithinPolygonAsync(cam.Position);
-            Debug.Log($"Camera placement is valid is {camIsValid}");
         };
         this._cameraPlacer.OnActivityChange += cameraPlacerIsActive => this._addCameraButton.SetActive(!cameraPlacerIsActive);
         await SetUnityCamera();
@@ -52,6 +52,7 @@ public class GameManager : MonoBehaviour
         await this._floorplan.SetUp(_levelConfig.GetSimplePolygon(), _levelConfig.DesiredObject,
             _levelConfig.Entrance);
         _cameraPlacer.SetFloorplan(_floorplan);
+        this._floorplan.OnAmountOfCamerasChanged += HandleAmountOfCamerasChanged;
     }
 
     /// <summary>
@@ -123,15 +124,33 @@ public class GameManager : MonoBehaviour
         cam.SetColliderActive(false);
         cam.gameObject.transform.SetParent(this._cameraPlacer.gameObject.transform);
     }
+    
+    /// <summary>
+    /// Confirms the camera placements of all cameras, currently in the floorplan.
+    /// Make such are proceeding processes are started (like checking for a path, etc.).
+    /// This method is the 'non-async' version to be call-able from Unity's editor.
+    /// </summary>
+    public void ConfirmAllCameras() => this.ConfirmAllCamerasAsync();
 
     /// <summary>
     /// Confirms the camera placements of all cameras, currently in the floorplan.
-    /// Make such are proceeding processes are started (like checking for a path, etc.)
+    /// Make such are proceeding processes are started (like checking for a path, etc.).
     /// </summary>
-    private async Task ConfirmAllCameras()
+    private async Task ConfirmAllCamerasAsync()
     {
         // TODO: To be implemented by Damian M. Buzink
         throw new NotImplementedException();
+    }
+
+    /// <summary>
+    /// Handles the change in amount of cameras.
+    /// More specifically turns activates or deactivates
+    /// 'Confirm placement of all cameras' button.
+    /// </summary>
+    private void HandleAmountOfCamerasChanged(int amountOfCameras)
+    {
+        var isActive = amountOfCameras > 0;
+        this._confirmAllCamerasButton.SetActive(isActive);
     }
 
     /// <summary>

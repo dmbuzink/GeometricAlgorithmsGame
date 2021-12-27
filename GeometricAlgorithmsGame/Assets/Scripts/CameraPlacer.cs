@@ -1,7 +1,9 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
+using DefaultNamespace;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -20,6 +22,7 @@ public class CameraPlacer : MonoBehaviour
     [SerializeField] private RemoveButton _removeButton;
     [SerializeField] private ConfirmButton _confirmButton;
     [SerializeField] private RotateButton _rotateButton;
+    [SerializeField] private double _minimumDistanceToOtherCamera;
     private Vector3 _dragOffset;
     private Camera _camera;
     private Floorplan _floorplan;
@@ -55,6 +58,11 @@ public class CameraPlacer : MonoBehaviour
         this.transform.rotation = this._camera.transform.rotation;
         this._rotateButton.Camera = cam;
         this.OnActivityChange?.Invoke(true);
+        ResetValidationCache();
+        if (_floorplan.Cameras.Any())
+        {
+            SetConfirmButtonActive(false);
+        }
         this.gameObject.SetActive(true);
     }
 
@@ -131,10 +139,23 @@ public class CameraPlacer : MonoBehaviour
         }
 
         this._camera.Position = new Vertex(camPositionVector.x, camPositionVector.y);
-        _lastPositionValidity = await this._floorplan.SimplePolygon.PointIsWithinPolygonAsync(this._camera.Position);
+        // _lastPositionValidity = await this._floorplan.SimplePolygon.PointIsWithinPolygonAsync(this._camera.Position);
+        var isWithinPolygon = await this._floorplan.SimplePolygon.PointIsWithinPolygonAsync(this._camera.Position);
+        var notTooCloseToOtherCamera = this._floorplan.Cameras.All(c => c.Equals(_camera) ||
+            GeometricHelper.GetDistanceBetweenTwoPoints(_camera.Position, c.Position) > _minimumDistanceToOtherCamera);
+        _lastPositionValidity = isWithinPolygon && notTooCloseToOtherCamera;
         _lastValidatedPosition = this._camera.Position.Copy();
         this.SetConfirmButtonActive(_lastPositionValidity);
         return _lastPositionValidity;
+    }
+
+    /// <summary>
+    /// Sets the properties user by 'ValidatePosition' to their default values.
+    /// </summary>
+    private void ResetValidationCache()
+    {
+        this._lastPositionValidity = false;
+        this._lastValidatedPosition = null;
     }
 
     /// <summary>

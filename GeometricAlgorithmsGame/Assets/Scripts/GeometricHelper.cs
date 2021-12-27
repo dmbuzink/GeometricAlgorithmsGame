@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 namespace DefaultNamespace
 {
@@ -21,5 +22,14 @@ namespace DefaultNamespace
         /// <returns></returns>
         public static double AngleBetweenPoints(Vertex a, Vertex b) => 
             Mathf.Atan2((float) (a.Y - b.Y),  (float) (a.X - b.X)) * Mathf.Rad2Deg;
+
+        /// <summary>
+        /// Gets the distance between two points.
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
+        public static double GetDistanceBetweenTwoPoints(Vertex a, Vertex b) =>
+            Math.Sqrt(Math.Pow(a.X - b.X, 2) + Math.Pow(a.Y - b.Y, 2));
     }
 }

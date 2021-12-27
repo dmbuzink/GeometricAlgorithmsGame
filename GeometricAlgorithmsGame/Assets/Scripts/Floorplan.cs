@@ -5,11 +5,14 @@ using System.Linq;
 using System.Threading.Tasks;
 using DefaultNamespace;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public class Floorplan : MonoBehaviour
 {
+    public event Action<int> OnAmountOfCamerasChanged;
+    
     private VerticalDecomposition _verticalDecomposition;
-    private List<Camera> _cameras;
+    public List<Camera> Cameras;
     public SimplePolygon SimplePolygon;
     [SerializeField] private DesiredObject _desiredObject;
     [SerializeField] private Entrance _entrance;
@@ -42,7 +45,7 @@ public class Floorplan : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        this._cameras = new List<Camera>();
+        this.Cameras = new List<Camera>();
         // this._lineRenderer = gameObject.AddComponent<LineRenderer>();
         this._lineRenderer = gameObject.GetComponent<LineRenderer>();
         this._lineRenderer.loop = true;
@@ -81,7 +84,7 @@ public class Floorplan : MonoBehaviour
     /// </summary>
     public void ActivateSelectionColliderOfAllCameras()
     {
-        this._cameras.ForEach(c => c.SetColliderActive(true));
+        this.Cameras.ForEach(c => c.SetColliderActive(true));
     }
 
     /// <summary>
@@ -119,7 +122,8 @@ public class Floorplan : MonoBehaviour
     /// <param name="cam"></param>
     public void AddCamera(Camera cam)
     {
-        this._cameras.Add(cam);
+        this.Cameras.Add(cam);
+        this.OnAmountOfCamerasChanged?.Invoke(this.Cameras.Count);
     }
 
     /// <summary>
@@ -128,6 +132,7 @@ public class Floorplan : MonoBehaviour
     /// <param name="cam"></param>
     public void RemoveCamera(Camera cam)
     {
-        this._cameras.Remove(cam);
+        this.Cameras.Remove(cam);
+        this.OnAmountOfCamerasChanged?.Invoke(this.Cameras.Count);
     }
 }
