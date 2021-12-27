@@ -36,6 +36,7 @@ public class Floorplan : MonoBehaviour
         _desiredObject.transform.position = new Vector3((float) desiredObjectVertex.X, (float) desiredObjectVertex.Y);
         // _verticalDecomposition = await VerticalDecomposition.
             // CreateVerticalDecomposition(SimplePolygon);
+        // Temp. commented out due to issues with errors in GameManagers.InstantiateFloorplan() as result
     }
 
     // Start is called before the first frame update
