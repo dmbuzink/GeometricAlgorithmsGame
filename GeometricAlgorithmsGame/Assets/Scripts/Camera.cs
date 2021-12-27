@@ -9,6 +9,9 @@ using Slider = UnityEngine.UI.Slider;
 
 public class Camera : MonoBehaviour
 {
+    public event Action<Camera> onSelected;
+    [SerializeField] private BoxCollider2D _selectionCollider;
+    
     public Vertex Position { get; set; }
     public double Angle
     {
@@ -35,7 +38,7 @@ public class Camera : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        
+        // this._selectionCollider = GetComponent<BoxCollider2D>();
     }
 
     // Update is called once per frame
@@ -53,5 +56,23 @@ public class Camera : MonoBehaviour
     {
         // TODO: To be implemented by Damian M. Buzink
         throw new NotImplementedException();
+    }
+
+    /// <summary>
+    /// Registers the selection of this camera and invokes event for it.
+    /// </summary>
+    public void OnMouseUpAsButton()
+    {
+        this.onSelected?.Invoke(this);
+    }
+
+    /// <summary>
+    /// Set the "selection" collider to active or inactive, depedent on parameter.
+    /// This is used to handle overlapping colliders. 
+    /// </summary>
+    /// <param name="isActive"></param>
+    public void SetColliderActive(bool isActive)
+    {
+        this._selectionCollider.enabled = isActive;
     }
 }

@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -21,6 +22,8 @@ public class CameraPlacer : MonoBehaviour
     [SerializeField] private RotateButton _rotateButton;
     private Vector3 _dragOffset;
     private Camera _camera;
+    private Material _spriteRendererMaterialOfCamera;
+    private Floorplan _floorplan;
     
     // Start is called before the first frame update
     void Start()
@@ -29,14 +32,37 @@ public class CameraPlacer : MonoBehaviour
         this._confirmButton.OnPressed += this.Confirm;
     }
 
+    async void Update()
+    {
+        if (this.gameObject.activeSelf && _camera != null && _floorplan != null)
+        {
+            await ValidatePosition();
+        }
+    }
+
+    /// <summary>
+    /// Sets the camera for the camera placer, so the camera's placement
+    /// can be modified by the player.
+    /// </summary>
+    /// <param name="cam"></param>
     public void SetCamera(Camera cam)
     {
+        if (_camera != null)
+        {
+            this.Confirm();
+        }
         this._camera = cam;
         this.transform.position = this._camera.transform.position;
         this.transform.rotation = this._camera.transform.rotation;
         this._rotateButton.Camera = cam;
         this.OnActivityChange?.Invoke(true);
         this.gameObject.SetActive(true);
+        this._spriteRendererMaterialOfCamera = cam.GetComponent<SpriteRenderer>().material;
+    }
+
+    public void SetFloorplan(Floorplan fp)
+    {
+        this._floorplan = fp;
     }
 
     /// <summary>
@@ -50,6 +76,7 @@ public class CameraPlacer : MonoBehaviour
         this.OnCameraConfirmed?.Invoke(this._camera);
         this.gameObject.SetActive(false);
         this.OnActivityChange?.Invoke(false);
+        this._camera.SetColliderActive(true);
     }
 
     /// <summary>
@@ -73,6 +100,10 @@ public class CameraPlacer : MonoBehaviour
         this.transform.position = GetMousePosition() + this._dragOffset;
     }
 
+    /// <summary>
+    /// Gets the position of the cursor in world space.
+    /// </summary>
+    /// <returns></returns>
     private Vector3 GetMousePosition()
     {
         var inputMousePosition = Input.mousePosition;
@@ -80,6 +111,33 @@ public class CameraPlacer : MonoBehaviour
         mousePosition.z = 0;
         return mousePosition;
     }
-    
-    
+
+    private Vertex _lastValidatedPosition;
+    private bool _lastPositionValidity;
+    public async Task<bool> ValidatePosition(bool onlyIfNewPosition = true)
+    {
+        var camPositionVector = this._camera.gameObject.transform.position;
+        this._camera.Position = new Vertex(camPositionVector.x, camPositionVector.y);
+        if (_lastValidatedPosition != null && _lastValidatedPosition.SamePositionAs(this._camera.Position) && onlyIfNewPosition)
+        {
+            return _lastPositionValidity;
+        }
+
+        this._camera.Position = new Vertex(camPositionVector.x, camPositionVector.y);
+        _lastPositionValidity = await this._floorplan.SimplePolygon.PointIsWithinPolygonAsync(this._camera.Position);
+        _lastValidatedPosition = this._camera.Position.Copy();
+        SetPositionValidity(_lastPositionValidity);
+        this.SetConfirmButtonActive(_lastPositionValidity);
+        return _lastPositionValidity;
+    }
+
+    private void SetPositionValidity(bool isValid)
+    {
+        this._spriteRendererMaterialOfCamera.color = isValid ? Color.black : Color.red;
+    }
+
+    private void SetConfirmButtonActive(bool isActive)
+    {
+        this._confirmButton.gameObject.SetActive(isActive);
+    }
 }

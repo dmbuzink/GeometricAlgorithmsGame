@@ -1,10 +1,15 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
+using UnityEngine;
 
 public class SimplePolygon : IEnumerable<Vertex>
 {
     public Vertex[] Vertices { get; private set; }
+
+    private float? _maxX;
 
     /// <summary>
     /// Creates a new simple polygon given a list of alternating x and y coordinates
@@ -36,7 +41,7 @@ public class SimplePolygon : IEnumerable<Vertex>
         var pairs = new List<(Vertex v1, Vertex v2)>();
         for (var i = 0; i < Vertices.Length; i++)
         {
-            pairs.Add((Vertices.ElementAt(i), Vertices.ElementAt(i % Vertices.Length)));
+            pairs.Add((Vertices.ElementAt(i), Vertices.ElementAt((i + 1) % Vertices.Length)));
         }
         return pairs;
     }
@@ -44,4 +49,51 @@ public class SimplePolygon : IEnumerable<Vertex>
     public IEnumerator<Vertex> GetEnumerator() => this.Vertices.AsEnumerable().GetEnumerator();
 
     IEnumerator IEnumerable.GetEnumerator() => this.Vertices.GetEnumerator();
+
+    /// <summary>
+    /// Return true if the point is within the convex polygon.
+    /// </summary>
+    /// <param name="point"></param>
+    /// <returns></returns>
+    public async Task<bool> PointIsWithinConvexPolygon(Vertex point)
+    {
+        // TODO: REMOVE AT SOME POINT DAMIAN
+        var lineCheckTasks = GetVerticesPairWise().Select(pair => point.GetSideOfLine(pair.v1, pair.v2));
+        var lineChecks = await Task.WhenAll(lineCheckTasks);
+        // return lineChecks.All(orientation => orientation == 1);
+        return !lineChecks.Any(orientation => orientation < 1);
+    }
+
+    public async Task<bool> PointIsWithinPolygonAsync(Vertex point)
+    {
+        // TODO: Remove this reference and write in the report something about this.
+        // Based on solution: https://www.geeksforgeeks.org/how-to-check-if-a-given-point-lies-inside-a-polygon/
+
+        var startPointAsVector2 = new Vector2(point.Xf, point.Yf);
+        var endPointAsVector2 = new Vector2(GetMaxXOfPolygon() + 1, point.Yf);
+        
+        var lineSegmentOfPoint = new Util.Geometry.LineSegment(startPointAsVector2, endPointAsVector2);
+
+        var intersectionTasks = GetVerticesPairWise()
+            .Select(pair => Task.Run(() =>
+            {
+                var polygonLineSegment = new Util.Geometry.LineSegment(pair.v1.ToVector2(), pair.v2.ToVector2());
+                return Util.Geometry.LineSegment.Intersect(lineSegmentOfPoint, polygonLineSegment);
+            }));
+
+        var intersectionsPoints = await Task.WhenAll(intersectionTasks);
+        var numberOfIntersections = intersectionsPoints.Count(intersection => intersection != null);
+
+        return numberOfIntersections % 2 == 1;
+    }
+
+    public float GetMaxXOfPolygon()
+    {
+        if (this._maxX is null)
+        {
+            this._maxX = this.Max(v => v.Xf);
+        }
+
+        return _maxX.Value;
+    }
 }

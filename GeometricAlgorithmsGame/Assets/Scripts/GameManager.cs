@@ -25,8 +25,13 @@ public class GameManager : MonoBehaviour
         _levelConfig = string.IsNullOrEmpty(_levelConfigJson)
             ? GetDefaultLevelConfig()
             : LevelConfigManager.GetSelectedLevelConfig(this._levelConfigJson);
-
+        
         this._cameraPlacer.OnCameraRemoved += this.HandleCameraDeletion;
+        this._cameraPlacer.OnCameraConfirmed += async cam =>
+        {
+            var camIsValid = await this._floorplan.SimplePolygon.PointIsWithinPolygonAsync(cam.Position);
+            Debug.Log($"Camera placement is valid is {camIsValid}");
+        };
         this._cameraPlacer.OnActivityChange += cameraPlacerIsActive => this._addCameraButton.SetActive(!cameraPlacerIsActive);
         await SetUnityCamera();
         await InstantiateFloorplan();
@@ -46,6 +51,7 @@ public class GameManager : MonoBehaviour
         this._floorplan = Instantiate(FloorplanPrefab);
         await this._floorplan.SetUp(_levelConfig.GetSimplePolygon(), _levelConfig.DesiredObject,
             _levelConfig.Entrance);
+        _cameraPlacer.SetFloorplan(_floorplan);
     }
 
     /// <summary>
@@ -86,11 +92,25 @@ public class GameManager : MonoBehaviour
         var newCamera = Instantiate(this._cameraPrefab, _cameraPlacer.transform);
         this._floorplan.AddCamera(newCamera);
         this._cameraPlacer.SetCamera(newCamera);
+        newCamera.onSelected += HandleSelectionOfCamera;
+
+        this._floorplan.ActivateSelectionColliderOfAllCameras();
+        newCamera.SetColliderActive(false);
     }
 
     public void HandleCameraDeletion(Camera cam)
     {
+        cam.onSelected -= HandleSelectionOfCamera;
         this._floorplan.RemoveCamera(cam);
+    }
+
+    private void HandleSelectionOfCamera(Camera cam)
+    {
+        this._currentCamera = cam;
+        this._cameraPlacer.SetCamera(cam);
+        this._floorplan.ActivateSelectionColliderOfAllCameras();
+        cam.SetColliderActive(false);
+        cam.gameObject.transform.SetParent(this._cameraPlacer.gameObject.transform);
     }
 
     /// <summary>

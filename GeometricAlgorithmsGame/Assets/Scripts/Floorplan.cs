@@ -34,8 +34,8 @@ public class Floorplan : MonoBehaviour
         SimplePolygon = simplePolygon;
         _entrance.transform.position = new Vector3((float)entranceVertex.X, (float)entranceVertex.Y);
         _desiredObject.transform.position = new Vector3((float) desiredObjectVertex.X, (float) desiredObjectVertex.Y);
-        _verticalDecomposition = await VerticalDecomposition.
-            CreateVerticalDecomposition(SimplePolygon);
+        // _verticalDecomposition = await VerticalDecomposition.
+            // CreateVerticalDecomposition(SimplePolygon);
     }
 
     // Start is called before the first frame update
@@ -55,9 +55,12 @@ public class Floorplan : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
     }
     
+    /// <summary>
+    /// Draws the simple polygon making up the floorplan
+    /// </summary>
+    /// <returns></returns>
     private IEnumerator DrawFloorplan()
     {
         this._lineRenderer.positionCount = SimplePolygon.Count();
@@ -68,6 +71,16 @@ public class Floorplan : MonoBehaviour
         }
 
         yield return null;
+    }
+
+    /// <summary>
+    /// Activates the collider with which the player can select cameras.
+    /// This is turned of for a specific camera when modifying it's position,
+    /// due to overlapping colliders.
+    /// </summary>
+    public void ActivateSelectionColliderOfAllCameras()
+    {
+        this._cameras.ForEach(c => c.SetColliderActive(true));
     }
 
     /// <summary>
