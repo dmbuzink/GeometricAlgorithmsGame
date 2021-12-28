@@ -9,7 +9,6 @@ using UnityEngine.UI;
 public class LevelSelectManager : MonoBehaviour
 {
     [SerializeField] private LevelSelectButton _levelSelectButton;
-    // [SerializeField] private Button _levelSelectButton;
     [SerializeField] private TextAsset _levelConfigJsonTextAsset;
     [SerializeField] private GameObject _grid;
 
@@ -23,19 +22,22 @@ public class LevelSelectManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Add a level selection button for a level config to the list of levels.
+    /// </summary>
+    /// <param name="levelConfig"></param>
     private void AddButton(LevelConfig levelConfig)
     {
         var levelButton = Instantiate(_levelSelectButton, _grid.transform);
         var textComponent = levelButton.gameObject.GetComponentInChildren<Text>();
         textComponent.text = $"Level {levelConfig.LevelId}";
-        // levelButton.onClick.AddListener(() =>
-        // {
-        //     Debug.Log("CLICKED");
-        //     OnLevelSelectClick(levelConfig);
-        // });
         levelButton.OnLevelSelected += () => OnLevelSelectClick(levelConfig);
     }
     
+    /// <summary>
+    /// Handles the selection of a level.
+    /// </summary>
+    /// <param name="levelConfig"></param>
     private void OnLevelSelectClick(LevelConfig levelConfig)
     {
         LevelConfigManager.SelectedLevelConfig = levelConfig;

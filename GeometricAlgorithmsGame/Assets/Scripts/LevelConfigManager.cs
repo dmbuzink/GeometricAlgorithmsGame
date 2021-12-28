@@ -9,7 +9,6 @@ namespace DefaultNamespace
 {
     public static class LevelConfigManager
     {
-        // public static int SelectedLevelId { get; set; } = GetDefaultLevelConfig().LevelId;
         public static LevelConfig SelectedLevelConfig = GetDefaultLevelConfig();
         public static IEnumerable<LevelConfig> LevelConfigs;
 
@@ -20,11 +19,6 @@ namespace DefaultNamespace
         /// <returns></returns>
         public static IEnumerable<LevelConfig> LoadLevelConfigs(string levelConfigJson) =>
             LevelConfigs ??= Newtonsoft.Json.JsonConvert.DeserializeObject<IEnumerable<LevelConfig>>(levelConfigJson);
-        // {
-            // LevelConfigs ??= Newtonsoft.Json.JsonConvert.DeserializeObject<IEnumerable<LevelConfig>>(levelConfigJson);
-            // return LevelConfigs;
-        // }
-            // LevelConfigs ??= JsonUtility.FromJson<IEnumerable<LevelConfig>>(levelConfigJson);
 
         /// <summary>
         /// Gets the configuration for the default level.
