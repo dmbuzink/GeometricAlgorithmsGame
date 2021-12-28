@@ -9,30 +9,50 @@ namespace DefaultNamespace
 {
     public static class LevelConfigManager
     {
-        public static int SelectedLevelId { get; set; }
-        private static IEnumerable<LevelConfig> _levelConfigs; 
-        
+        // public static int SelectedLevelId { get; set; } = GetDefaultLevelConfig().LevelId;
+        public static LevelConfig SelectedLevelConfig = GetDefaultLevelConfig();
+        public static IEnumerable<LevelConfig> LevelConfigs;
+
         /// <summary>
-        /// Gets the selected level config
+        /// Load the level configs based on the json file
         /// </summary>
-        /// <param name="levelConfigsJson"></param>
+        /// <param name="levelConfigJson"></param>
         /// <returns></returns>
-        /// <exception cref="ArgumentException"></exception>
-        public static LevelConfig GetSelectedLevelConfig(string levelConfigsJson)
+        public static IEnumerable<LevelConfig> LoadLevelConfigs(string levelConfigJson) =>
+            LevelConfigs ??= Newtonsoft.Json.JsonConvert.DeserializeObject<IEnumerable<LevelConfig>>(levelConfigJson);
+        // {
+            // LevelConfigs ??= Newtonsoft.Json.JsonConvert.DeserializeObject<IEnumerable<LevelConfig>>(levelConfigJson);
+            // return LevelConfigs;
+        // }
+            // LevelConfigs ??= JsonUtility.FromJson<IEnumerable<LevelConfig>>(levelConfigJson);
+
+        /// <summary>
+        /// Gets the configuration for the default level.
+        /// </summary>
+        /// <returns></returns>
+        private static LevelConfig GetDefaultLevelConfig()
         {
-            if (_levelConfigs is null)
-            {
-                _levelConfigs = JsonUtility.FromJson<IEnumerable<LevelConfig>>(levelConfigsJson);
-            }
+            var entrance = new Vertex(11.7, 7);
+            var desiredObject = new Vertex(5.1, 5);
+        
+            var v1 = new Vertex(1, 1);
+            var v2 = new Vertex(2, 2);
+            var v3 = new Vertex(1.5, 3);
+            var v4 = new Vertex(3, 4);
+            var v5 = new Vertex(5, 7);
+            var v6 = new Vertex(12, 7);
+            var v7 = new Vertex(16, 5);
+            var v8 = new Vertex(15, 2.5);
+            var v9 = new Vertex(14, 1.7);
+            var v10 = new Vertex(6, 1.2);
 
-            var levelConfig = _levelConfigs.FirstOrDefault(lc => lc.LevelId == SelectedLevelId);
-            if (levelConfig is null)
+            return new LevelConfig()
             {
-                throw new ArgumentException(
-                    $"No level configuration with id {SelectedLevelId} could be found in the given json file");
-            }
-
-            return levelConfig;
+                LevelId = 0,
+                Entrance = entrance,
+                DesiredObject = desiredObject,
+                Vertices = new[] { v10, v9, v8, v7, v6, v5, v4, v3, v2, v1 }
+            };
         }
     }
 

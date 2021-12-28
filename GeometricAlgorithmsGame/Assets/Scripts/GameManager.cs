@@ -3,18 +3,19 @@ using System.Linq;
 using System.Threading.Tasks;
 using DefaultNamespace;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
     [SerializeField] private float CameraSizeMargin;
     [SerializeField] private Floorplan FloorplanPrefab;
-    [SerializeField] private string _levelConfigJson;
     [SerializeField] private Camera _cameraPrefab;
     [SerializeField] private Floorplan _floorplan;
     [SerializeField] private UnityEngine.Camera _unityCamera;
     [SerializeField] private CameraPlacer _cameraPlacer;
     [SerializeField] private GameObject _addCameraButton;
     [SerializeField] private GameObject _confirmAllCamerasButton;
+    [SerializeField] private Text _levelXText;
     private Camera _currentCamera;
     private LevelConfig _levelConfig;
     private Vector3 _centerPointOfWorld;
@@ -23,9 +24,8 @@ public class GameManager : MonoBehaviour
     // Start is called before the first frame update
     async void Start()
     {
-        _levelConfig = string.IsNullOrEmpty(_levelConfigJson)
-            ? GetDefaultLevelConfig()
-            : LevelConfigManager.GetSelectedLevelConfig(this._levelConfigJson);
+        _levelConfig = LevelConfigManager.SelectedLevelConfig;
+        _levelXText.text = $"Level {_levelConfig.LevelId}";
         
         this._cameraPlacer.OnCameraRemoved += this.HandleCameraDeletion;
         this._cameraPlacer.OnCameraConfirmed += async cam =>
@@ -169,34 +169,5 @@ public class GameManager : MonoBehaviour
     {
         // TODO: To be implemented by Teun van Zon
         throw new NotImplementedException();
-    }
-
-    /// <summary>
-    /// Gets the configuration for the default level.
-    /// </summary>
-    /// <returns></returns>
-    private LevelConfig GetDefaultLevelConfig()
-    {
-        var entrance = new Vertex(11.7, 7);
-        var desiredObject = new Vertex(5.1, 5);
-        
-        var v1 = new Vertex(1, 1);
-        var v2 = new Vertex(2, 2);
-        var v3 = new Vertex(1.5, 3);
-        var v4 = new Vertex(3, 4);
-        var v5 = new Vertex(5, 7);
-        var v6 = new Vertex(12, 7);
-        var v7 = new Vertex(16, 5);
-        var v8 = new Vertex(15, 2.5);
-        var v9 = new Vertex(14, 1.7);
-        var v10 = new Vertex(6, 1.2);
-
-        return new LevelConfig()
-        {
-            LevelId = -1,
-            Entrance = entrance,
-            DesiredObject = desiredObject,
-            Vertices = new[] { v10, v9, v8, v7, v6, v5, v4, v3, v2, v1 }
-        };
     }
 }
