@@ -16,7 +16,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private GameObject _addCameraButton;
     [SerializeField] private GameObject _confirmAllCamerasButton;
     [SerializeField] private Text _levelXText;
-    private Camera _currentCamera;
+    [SerializeField] private ResultScreenManager _resultScreenManager;
     private LevelConfig _levelConfig;
     private Vector3 _centerPointOfWorld;
 
@@ -118,7 +118,6 @@ public class GameManager : MonoBehaviour
     /// <param name="cam"></param>
     private void HandleSelectionOfCamera(Camera cam)
     {
-        this._currentCamera = cam;
         this._cameraPlacer.SetCamera(cam);
         this._floorplan.ActivateSelectionColliderOfAllCameras();
         cam.SetColliderActive(false);
@@ -156,18 +155,10 @@ public class GameManager : MonoBehaviour
     /// <summary>
     /// Show the screen for when the player succeeds
     /// </summary>
-    private void ShowSuccessScreen()
-    {
-        // TODO: To be implemented by Teun van Zon
-        throw new NotImplementedException();
-    }
+    private void ShowSuccessScreen() => _resultScreenManager.ShowSuccessScreen();
 
     /// <summary>
     /// Show the screen for when the player fails
     /// </summary>
-    private void ShowFailureScreen()
-    {
-        // TODO: To be implemented by Teun van Zon
-        throw new NotImplementedException();
-    }
+    private void ShowFailureScreen() => _resultScreenManager.ShowFailureScreen();
 }

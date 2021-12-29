@@ -11,4 +11,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/FloorplanCameraPlacementScene.unity
     guid: 7a4e05a383013ea4aa5b573abf1b6550
+  - enabled: 1
+    path: Assets/Scenes/MainMenu.unity
+    guid: 0093acf3031cf984e818abc4f2891145
   m_configObjects: {}
