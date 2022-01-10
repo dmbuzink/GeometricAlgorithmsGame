@@ -353,7 +353,7 @@ namespace DefaultNamespace
         /// ```
         /// </code>
         /// </summary>
-        /// <returns>The new root node of the tree represented by the subtree of this node, after a left rotation</returns>
+        /// <returns>The new Root node of the tree represented by the subtree of this node, after a left rotation</returns>
         protected BinaryNode<D> RotateLeft()
         {
             BinaryNode<D> x = this.right;
@@ -377,7 +377,7 @@ namespace DefaultNamespace
         ///  / \                /  \ 
         /// T1 T2              T2  T3 </code>
         /// </summary>
-        /// <returns>The new root node of the tree represented by the subtree of this node, after a left rotation</returns>
+        /// <returns>The new Root node of the tree represented by the subtree of this node, after a left rotation</returns>
         protected BinaryNode<D> rotateRight()
         {
             BinaryNode<D> x = this.left!;
@@ -419,7 +419,7 @@ namespace DefaultNamespace
                     /*
                      *     this                            this
                      *      / \                            /   \
-                     *     y   T4  Left Rotate (y)        x    T4
+                     *     y   T4  Bottom Rotate (y)        x    T4
                      *    / \      - - - - - - - - ->    /  \
                      *  T1   x                          y    T3
                      *      / \                        / \
@@ -432,7 +432,7 @@ namespace DefaultNamespace
                 /*
                  *        this                                     y
                  *         / \                                   /   \
-                 *        y   T4      Right Rotate (z)          x     this
+                 *        y   T4      Top Rotate (z)          x     this
                  *       / \          - - - - - - - - ->      /  \    /  \
                  *      x   T3                               T1  T2  T3  T4
                  *     / \
@@ -448,7 +448,7 @@ namespace DefaultNamespace
                     /*
                      *   this                         this
                      *    / \                          / \
-                     *  T1   y   Right Rotate (y)    T1   x
+                     *  T1   y   Top Rotate (y)    T1   x
                      *      / \  - - - - - - - - ->     /  \
                      *     x   T4                      T2   y
                      *    / \                              /  \
@@ -461,7 +461,7 @@ namespace DefaultNamespace
                 /*
                  *   this                              y
                  *   /  \                            /   \
-                 *  T1   y     Left Rotate(z)      this    x
+                 *  T1   y     Bottom Rotate(z)      this    x
                  *      /  \   - - - - - - - ->    / \    / \
                  *     T2   x                     T1  T2 T3  T4
                  *         / \
