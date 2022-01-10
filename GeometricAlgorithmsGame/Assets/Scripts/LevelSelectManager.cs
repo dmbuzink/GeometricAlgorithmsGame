@@ -11,6 +11,7 @@ public class LevelSelectManager : MonoBehaviour
     [SerializeField] private LevelSelectButton _levelSelectButton;
     [SerializeField] private TextAsset _levelConfigJsonTextAsset;
     [SerializeField] private GameObject _grid;
+    [SerializeField] private MainMenuManager _mainMenuManager;
 
     // Start is called before the first frame update
     void Start()
@@ -40,6 +41,7 @@ public class LevelSelectManager : MonoBehaviour
     /// <param name="levelConfig"></param>
     private void OnLevelSelectClick(LevelConfig levelConfig)
     {
+        _mainMenuManager.StopButtonEvents();
         LevelConfigManager.SelectedLevelConfig = levelConfig;
         SceneManager.LoadScene("FloorplanCameraPlacementScene");
     }
