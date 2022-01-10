@@ -44,6 +44,13 @@ public class Vertex
         Math.Abs(this.X - v.X) < Mathf.Epsilon && Math.Abs(this.Y - v.Y) < Mathf.Epsilon;
 
     /// <summary>
+    /// Returns true if the vertices are completely identical
+    /// </summary>
+    /// <param name="v"></param>
+    /// <returns></returns>
+    public bool Equals(Vertex v) => v != null && this.X == v.X && this.Y == v.Y;
+
+    /// <summary>
     /// Creates a deep copy of the vertex
     /// </summary>
     /// <returns></returns>
