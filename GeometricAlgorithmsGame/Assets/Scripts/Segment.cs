@@ -22,7 +22,7 @@ namespace DefaultNamespace
         /// <returns></returns>
         public int GetSideOfPoint(Vertex point) =>
             // Making use of the determinant with vectors: startPoint -> endPoint, startPoint -> pointInQuestion
-            Math.Sign((EndPoint.X - StartPoint.X) * (point.Y - StartPoint.Y) -
+            -Math.Sign((EndPoint.X - StartPoint.X) * (point.Y - StartPoint.Y) -
                                            (EndPoint.Y - StartPoint.Y) * (point.X - StartPoint.X));
         /// <summary>
         /// Returns -1 if the given line is to the left of this line, 0 if the lines are collinear or 1 if to the right.

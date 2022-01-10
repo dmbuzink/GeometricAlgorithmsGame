@@ -31,7 +31,16 @@ namespace DefaultNamespace
         }
         public override Trapezoid<T> FindTrapezoid(Segment segment)
         {
-            return this.FindTrapezoid(segment.StartPoint);
+            Vertex point = segment.StartPoint;
+
+            if (point.X > this.Point.X || (point.X == this.Point.X && point.Y > this.Point.Y))
+            {
+                return this.Right.FindTrapezoid(segment);
+            }
+            else
+            {
+                return this.Left.FindTrapezoid(segment);
+            }
         }
         
         public override void Replace(

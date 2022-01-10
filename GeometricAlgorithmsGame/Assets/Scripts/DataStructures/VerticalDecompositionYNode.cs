@@ -37,6 +37,7 @@ namespace DefaultNamespace
         public override Trapezoid<T> FindTrapezoid(Segment segment)
         {
             bool below = this.IsLineBelow(segment);
+            ;
             if (below)
                 return this.Bottom.FindTrapezoid(segment);
             else

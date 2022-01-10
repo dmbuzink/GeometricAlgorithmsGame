@@ -42,7 +42,7 @@ namespace DefaultNamespace
 
         public override void LinkNodes(VerticalDecompositionNode<T> parent)
         {
-            this.Parents.Add(parent);
+            if(!this.Parents.Contains(parent)) this.Parents.Add(parent);
         }
     }
 }
