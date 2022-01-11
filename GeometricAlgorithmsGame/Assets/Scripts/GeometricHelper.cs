@@ -20,8 +20,17 @@ namespace DefaultNamespace
         /// <param name="a"></param>
         /// <param name="b"></param>
         /// <returns></returns>
-        public static double AngleBetweenPoints(Vertex a, Vertex b) => 
-            Mathf.Atan2((float) (a.Y - b.Y),  (float) (a.X - b.X)) * Mathf.Rad2Deg;
+        public static double AngleBetweenPoints(Vertex a, Vertex b) =>
+            AngleBetweenPointsRad(a, b) * Mathf.Rad2Deg;
+
+        /// <summary>
+        /// Get the angle between two points in radians
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns>The angle in radians</returns>
+        public static double AngleBetweenPointsRad(Vertex a, Vertex b) =>
+            Mathf.Atan2((float)(a.Y - b.Y), (float)(a.X - b.X));
 
         /// <summary>
         /// Gets the distance between two points.
