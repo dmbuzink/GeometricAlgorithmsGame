@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace DefaultNamespace
 {
@@ -78,6 +79,12 @@ namespace DefaultNamespace
         {
             this.Top.LinkNodes(this);
             this.Bottom.LinkNodes(this);
+        }
+        
+        public override void GetTrapezoids(List<Trapezoid<T>> trapezoids)
+        {
+            this.Top.GetTrapezoids(trapezoids);
+            this.Bottom.GetTrapezoids(trapezoids);
         }
     }
 }

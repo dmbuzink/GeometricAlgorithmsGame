@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+
 namespace DefaultNamespace
 {
     public abstract class VerticalDecompositionNode<T> where T: Segment
@@ -26,5 +29,11 @@ namespace DefaultNamespace
         /// </summary>
         /// <param name="parent"></param>
         public abstract void LinkNodes(VerticalDecompositionNode<T> parent);
+
+        /// <summary>
+        /// Adds the found trapezoids to the given list
+        /// </summary>
+        /// <param name="trapezoids"></param>
+        public abstract void GetTrapezoids(List<Trapezoid<T>> trapezoids);
     }
 }

@@ -44,5 +44,37 @@ namespace DefaultNamespace
         {
             if(!this.Parents.Contains(parent)) this.Parents.Add(parent);
         }
+        
+        public override void GetTrapezoids(List<Trapezoid<T>> trapezoids)
+        {
+            trapezoids.Add(this);
+        }
+
+        /// <summary>
+        /// Computes the area of this trapezoid
+        /// </summary>
+        /// <returns></returns>
+        public double GetArea()
+        {
+            double topLeftY = this.GetYCoordinate(this.Left.X, this.Top);
+            double topRightY = this.GetYCoordinate(this.Right.X, this.Top);
+            double bottomLeftY = this.GetYCoordinate(this.Left.X, this.Bottom);
+            double bottomRightY = this.GetYCoordinate(this.Right.X, this.Bottom);
+
+            double leftHeight = topLeftY - bottomLeftY;
+            double rightHeight = topRightY - bottomRightY;
+            double width = Right.X - Left.X;
+
+            double area = width * (leftHeight + rightHeight) / 2; 
+            return area;
+        }
+
+        protected double GetYCoordinate(double x, Segment line)
+        {
+            double dx = line.EndPoint.X - line.StartPoint.X;
+            double dy = line.EndPoint.Y - line.StartPoint.Y;
+
+            return (x - line.StartPoint.X) / dx * dy + line.StartPoint.Y;
+        }
     }
 }

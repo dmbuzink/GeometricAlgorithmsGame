@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace DefaultNamespace
 {
     public class VerticalDecompositionXNode<T>:VerticalDecompositionNode<T> where T : Segment
@@ -56,6 +58,12 @@ namespace DefaultNamespace
         {
             this.Left.LinkNodes(this);
             this.Right.LinkNodes(this);
+        }
+
+        public override void GetTrapezoids(List<Trapezoid<T>> trapezoids)
+        {
+            this.Left.GetTrapezoids(trapezoids);
+            this.Right.GetTrapezoids(trapezoids);
         }
     }
 }

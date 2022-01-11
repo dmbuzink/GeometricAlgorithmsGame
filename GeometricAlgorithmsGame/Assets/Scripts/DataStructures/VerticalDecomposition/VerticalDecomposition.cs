@@ -8,7 +8,7 @@ namespace DefaultNamespace
     public class VerticalDecomposition<T> where T: Segment
     {
         private Random rng = new Random(3);
-        public VerticalDecompositionNode<T> Root;
+        public VerticalDecompositionNode<T> Root {  get; private set; }
         
 
         /// <summary>
