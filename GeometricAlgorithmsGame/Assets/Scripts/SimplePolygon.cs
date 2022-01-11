@@ -59,6 +59,7 @@ public class SimplePolygon : IEnumerable<Vertex>
     {
         // TODO: Remove this reference and write in the report something about this.
         // Based on solution: https://www.geeksforgeeks.org/how-to-check-if-a-given-point-lies-inside-a-polygon/
+        // I don't think we actually need this code if we use the vertical decomposition - Tar
 
         var startPointAsVector2 = new Vector2(point.Xf, point.Yf);
         var endPointAsVector2 = new Vector2(GetMaxXOfPolygon() + 1, point.Yf);
