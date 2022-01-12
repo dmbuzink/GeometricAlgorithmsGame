@@ -15,36 +15,26 @@ public class Camera : MonoBehaviour
     public Vertex Position { get; set; }
     public double Angle
     {
-        get => this._angle;
-        set
-        {
-            if (value < 0 || value >= 360)
-            {
-                throw new ArgumentException(
-                    "The direction of the camera should be between 0 (inclusive) and 360 (exclusive)");
-            }
-
-            this._angle = value;
+        get 
+        { 
+            var z = this.gameObject.transform.rotation.eulerAngles.z;
+            return z < Mathf.Epsilon ? 0 : 360 - z; 
         }
     }
-    private double _angle; // <- Should not be used directly, but should only be used by the Angle property.
 
-    public Camera(Vertex position, double angle = 0)
+    public Camera(Vertex position)
     {
         this.Position = position;
-        this._angle = angle;
     }
 
     // Start is called before the first frame update
     void Start()
     {
-        // this._selectionCollider = GetComponent<BoxCollider2D>();
     }
 
     // Update is called once per frame
     void Update()
     {
-        
     }
 
     /// <summary>
