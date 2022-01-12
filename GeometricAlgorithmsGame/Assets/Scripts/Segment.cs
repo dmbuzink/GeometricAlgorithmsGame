@@ -44,6 +44,41 @@ namespace DefaultNamespace
         }
 
         /// <summary>
+        /// Calculates the intersection point between the line extension of this segment and the line extension of the given segment
+        /// </summary>
+        /// <param name="line"></param>
+        /// <returns></returns>
+        public Vertex GetIntersectionPoint(Segment line)
+        {
+            double dxThis = this.StartPoint.X - this.EndPoint.X;
+            double slopeThis = (this.StartPoint.Y - this.EndPoint.Y) / dxThis;
+            double interceptThis = this.StartPoint.Y - slopeThis * this.StartPoint.X;
+            double dxLine = line.StartPoint.X - line.EndPoint.X;
+            double slopeLine = (line.StartPoint.Y - line.EndPoint.Y) / dxLine;
+            double interceptLine = line.StartPoint.Y - slopeLine * line.StartPoint.X;
+
+            if (dxThis == 0 && dxLine == 0)
+                return new Vertex(
+                    this.StartPoint.X,
+                    Math.Max(this.StartPoint.Y, line.StartPoint.Y)
+                );
+            if (dxThis == 0)
+                return new Vertex(
+                    this.StartPoint.X,
+                    slopeLine * this.StartPoint.X + interceptLine
+                );
+            if (dxLine == 0)
+                return new Vertex(
+                    line.StartPoint.X,
+                    slopeThis * line.StartPoint.X + interceptThis
+                );
+
+            double x = (interceptThis - interceptLine) / (slopeLine - slopeThis);
+            double y = slopeThis * x + interceptThis;
+            return new Vertex(x, y);
+        }
+
+        /// <summary>
         /// Retrieves this same line but possibly flipped, such that it's oriented form left to right, or bottom to top if it's vertical
         /// </summary>
         /// <returns></returns>
