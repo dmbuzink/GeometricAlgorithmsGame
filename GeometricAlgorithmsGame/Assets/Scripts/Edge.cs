@@ -46,22 +46,18 @@ namespace DefaultNamespace
             var xdiff = (line1.StartPoint.X - line1.EndPoint.X, line2.StartPoint.X - line2.EndPoint.X);
             var ydiff = (line1.StartPoint.Y - line1.EndPoint.Y, line2.StartPoint.Y - line2.EndPoint.Y);
 
+            var div = GeometricHelper.Determinant(xdiff, ydiff);
 
-            //Computes the determinant between two vectors
-            double Det((double, double) a, (double, double) b)
-            {
-                return a.Item1 * b.Item2 - a.Item2 * b.Item1;
-            }
+            var d = (GeometricHelper.Determinant((line1.StartPoint.X, line1.StartPoint.Y), (line1.EndPoint.X, line1.EndPoint.Y)), GeometricHelper.Determinant((line2.StartPoint.X, line2.StartPoint.Y), (line2.EndPoint.X, line2.EndPoint.Y)));
+            var x = GeometricHelper.Determinant(d, xdiff) / div;
+            var y = GeometricHelper.Determinant(d, ydiff) / div;
 
-            var div = Det(xdiff, ydiff);
-
-            var d = (Det((line1.StartPoint.X, line1.StartPoint.Y), (line1.EndPoint.X, line1.EndPoint.Y)), Det((line2.StartPoint.X, line2.StartPoint.Y), (line2.EndPoint.X, line2.EndPoint.Y)));
-            var x = Det(d, xdiff) / div;
-            var y = Det(d, ydiff) / div;
-
+            //Due to rounding issues, if the x/y diff is really small due to rounding when it should actually be 0,
+            //this can cause x/y to be extremely large even though it should be 0. So we somehow needt to prevent this.
             //Rather ugly, but seems to solve some of the annoying rounding issues
-            if (x > 16331239353195370 / 10000) x = 0;
-            if (y > 16331239353195370 / 10000) y = 0;
+            //This values are rather arbitrary, but seem to work well so far. 
+            if (x > int.MaxValue / 10000) x = 0;
+            if (y > int.MaxValue / 10000) y = 0;
 
             return new PolygonVertex(x, y, new List<PolygonVertex>());
         }

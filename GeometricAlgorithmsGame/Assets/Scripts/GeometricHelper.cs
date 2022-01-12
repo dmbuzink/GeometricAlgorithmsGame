@@ -40,5 +40,23 @@ namespace DefaultNamespace
         /// <returns></returns>
         public static double GetDistanceBetweenTwoPoints(Vertex a, Vertex b) =>
             Math.Sqrt(Math.Pow(a.X - b.X, 2) + Math.Pow(a.Y - b.Y, 2));
+
+        /// <summary>
+        /// Computes the determinant between two points
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns>The determinant</returns>
+        public static double Determinant((double, double) a, (double, double) b) =>
+            a.Item1 * b.Item2 - a.Item2 * b.Item1;
+
+        /// <summary>
+        /// Computes the determinant between two vertices
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns>The determinant</returns>
+        public static double Determinant(Vertex a, Vertex b) =>
+            Determinant((a.X, a.Y), (b.X, b.Y));
     }
 }
