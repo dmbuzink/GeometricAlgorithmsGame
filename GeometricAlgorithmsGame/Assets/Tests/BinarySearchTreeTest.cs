@@ -131,6 +131,22 @@ namespace Tests
             Assert.AreEqual(0, tree.Find(23));
         }
 
+
+        [Test]
+        public void Delete_HandlesEmptying()
+        {
+            BinarySearchTree<int> tree = this.createTree(
+                (a, b) => a - b,
+                new int[] { 1, 3, 2 });
+
+            int[] remove = new int[] { 1, 2, 3 };
+            foreach (int rem in remove) tree.Delete(rem);
+
+            Assert.AreEqual(0, tree.Find(1));
+            Assert.AreEqual(0, tree.Find(2));
+            Assert.AreEqual(0, tree.Find(3));
+        }
+
         [Test]
         public void FindNext_ObtainsNextItemIfThere()
         {

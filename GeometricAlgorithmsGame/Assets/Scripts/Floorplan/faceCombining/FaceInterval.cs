@@ -30,7 +30,7 @@ namespace DefaultNamespace
             this.Left = left;
             this.Right = right;
 
-            if (left.Intersects(right))
+            if (left !=null && right != null && left.Intersects(right))
             {
                 Vertex intersectionPoint = left.GetIntersectionPoint(right);
                 this.Intersection = new FaceCrossEvent<F>(this, intersectionPoint);

@@ -409,6 +409,7 @@ namespace DefaultNamespace
         /// <returns>The node representing this subtree after rebalancing</returns>
         protected BinaryNode<D> Rebalance()
         {
+            return this;
             // For more info, see: https://www.geeksforgeeks.org/avl-tree-set-2-deletion/?ref=lbp
             int balance = this.GetBalance();
             if (balance < -1)

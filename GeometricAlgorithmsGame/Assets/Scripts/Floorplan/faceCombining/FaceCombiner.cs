@@ -33,38 +33,24 @@ namespace DefaultNamespace
             BinarySearchTree<FaceInterval<F>> scanLine = new BinarySearchTree<FaceInterval<F>>((ai, bi) =>
             {
                 IntervalBoundary<F> a = ai.Left;
-                IntervalBoundary<F> b = ai.Right;
+                IntervalBoundary<F> b = bi.Left;
 
                 // Only the left most interval has no left boundary, of which only 1 can exist
                 if (a == null && b == null) return 0;
                 if (a == null) return -1;
                 if (b == null) return 1;
+                
+                int aStartSide = b.GetSideOfPoint(a.StartPoint);
+                int aEndSide = b.GetSideOfPoint(a.EndPoint);
 
+                // aEndSide != -aStartSide prioritizes b's result in case a's points are on opposite sides of b
+                if (aStartSide != 0 && aEndSide != -aStartSide) return aStartSide;
+                if (aEndSide != 0 && aEndSide != -aStartSide) return aEndSide;
 
-                // Compare from the perspective of the start point furthest up,
-                // since the lower point may have been calculated to be the intersection of the lines through segments a and b
-                // in that case rounding issues may yield the wrong result for left or right
-                if (a.StartPoint.Y >= b.StartPoint.Y ||
-                    (a.StartPoint.Y == b.StartPoint.Y && a.StartPoint.X >= b.StartPoint.X))
-                {
-                    int aStartSide = b.GetSideOfPoint(a.StartPoint);
-                    if (aStartSide == -1) return -1;
-                    if (aStartSide == 1) return 1;
-
-                    int aEndSide = b.GetSideOfPoint(a.EndPoint);
-                    if (aEndSide == -1) return -1;
-                    if (aEndSide == 1) return 1;
-                }
-                else
-                {
-                    int bStartSide = a.GetSideOfPoint(b.StartPoint);
-                    if (bStartSide == -1) return 1;
-                    if (bStartSide == 1) return -1;
-
-                    int bEndSide = a.GetSideOfPoint(b.EndPoint);
-                    if (bEndSide == -1) return 1;
-                    if (bEndSide == 1) return -1;
-                }
+                int bStartSide = a.GetSideOfPoint(b.StartPoint);
+                if (bStartSide != 0) return -bStartSide;
+                int bEndSide = a.GetSideOfPoint(b.EndPoint);
+                if (bEndSide != 0) return -bEndSide;
 
                 // Sort all intervals with the same left boundary arbitrarily by ID
                 return a.ID - b.ID;
@@ -213,24 +199,24 @@ namespace DefaultNamespace
         {
             FaceInterval<F> interval = evt.Interval;
             Vertex point = evt.Point;
-            IntervalBoundary<F> left = interval.Left;
-            IntervalBoundary<F> right = interval.Right;
-            if (left == null || right == null)
+            IntervalBoundary<F> oldLeft = interval.Left;
+            IntervalBoundary<F> oldRight = interval.Right;
+            if (oldLeft == null || oldRight == null)
                 throw new InvalidDataException(
                     "Reached a supposedly unreachable state, no crossing event for an interval missing one of its boundaries can exist");
 
             // Update the boundaries intervals to no longer cross
             interval.Left = new IntervalBoundary<F>(
-                left.StartPoint, 
+                oldLeft.StartPoint, 
                 point, 
-                left.Source, 
-                left.IsLeftWall
+                oldLeft.Source, 
+                oldLeft.IsLeftWall
             );
             interval.Right = new IntervalBoundary<F>(
-                right.StartPoint,
+                oldRight.StartPoint,
                 point,
-                right.Source,
-                right.IsLeftWall
+                oldRight.Source,
+                oldRight.IsLeftWall
             );
 
             // Update the boundaries of neighboring intervals
@@ -240,20 +226,20 @@ namespace DefaultNamespace
                 throw new InvalidDataException(
                     "Reached a supposedly unreachable state, a boundary should always be shared by two intervals");
             prevInterval.Right = interval.Left;
-            prevInterval.Left = interval.Right;
+            nextInterval.Left = interval.Right;
 
             // Create new line events to continue the intersecting lines
             FaceEdgeEvent<F> newLeftEvent = new FaceEdgeEvent<F>(
                 point,
-                left.EndPoint,
-                left.IsLeftWall,
-                left.Source
+                oldLeft.EndPoint,
+                oldLeft.IsLeftWall,
+                oldLeft.Source
             );
             FaceEdgeEvent<F> newRightEvent = new FaceEdgeEvent<F>(
                 point,
-                right.EndPoint,
-                right.IsLeftWall,
-                right.Source
+                oldRight.EndPoint,
+                oldRight.IsLeftWall,
+                oldRight.Source
             );
             eventQueue.Insert(newLeftEvent);
             eventQueue.Insert(newRightEvent);
@@ -275,10 +261,9 @@ namespace DefaultNamespace
         ) where F : SimplePolygon
         {
             Vertex point = events[0].Point; // The event points are all the same
-            Segment pointSeg = new Segment(point, point);
             List<FaceInterval<F>> intervalsWithPoint = scanLine.FindRange(
-                FaceCombiner.GetIntervalFinder<F>(pointSeg, -1),
-                FaceCombiner.GetIntervalFinder<F>(pointSeg, 1)
+                FaceCombiner.GetIntervalFinder<F>(point, -1),
+                FaceCombiner.GetIntervalFinder<F>(point, 1)
             );
             if (intervalsWithPoint.Count == 0)
                 throw new InvalidDataException(
@@ -430,12 +415,14 @@ namespace DefaultNamespace
         {
             List<CombinedFace<F>> output = new List<CombinedFace<F>>();
 
-            foreach (MonotonePolygonSection<F> section in sections)
+            HashSet<MonotonePolygonSection<F>> sectionsCopy = new HashSet<MonotonePolygonSection<F>>(sections);
+            foreach (MonotonePolygonSection<F> section in sectionsCopy)
             {
                 if (section.Sources.Count == 0) continue;
 
                 List<Vertex> points = new List<Vertex>();
                 FaceCombiner.ExploreSections<F>(section, null, sections, points);
+                if (points.Count <= 0) continue;
 
                 List<Vertex> noDuplicatePoints = new List<Vertex>();
                 Vertex prevPoint = points[points.Count-1];
@@ -450,7 +437,7 @@ namespace DefaultNamespace
 
                 output.Add(new CombinedFace<F>(
                     section.Sources,
-                    points
+                    noDuplicatePoints
                 ));
             }
 
@@ -481,7 +468,7 @@ namespace DefaultNamespace
             MonotonePolygonSection<F> bottomRight = section.BottomRight;
 
             int start = 0;
-            if (parent == null)
+            if (parent != null)
             {
                 if (topLeft == parent) start = 0;
                 else if (bottomLeft == parent) start = 1;
@@ -489,18 +476,18 @@ namespace DefaultNamespace
                 else if (topRight == parent) start = 3;
             }
 
-            for (int i = 0; i < 0; i++)
+            for (int i = 0; i < 4; i++)
             {
                 int side = (i + start) % 4;
                 if (side == 0)
                 {
                     if(topLeft != null && topLeft != parent)
                         ExploreSections<F>(topLeft, section, remainingSections, points);
-                } else if (side == 0)
+                } else if (side == 1)
                 {
                     if (bottomLeft != null && bottomLeft != parent)
                         ExploreSections<F>(bottomLeft, section, remainingSections, points);
-                } else if (side == 1)
+                } else if (side == 2)
                 {
                     if (bottomRight != null && bottomRight != parent)
                         ExploreSections<F>(bottomRight, section, remainingSections, points);
@@ -682,7 +669,7 @@ namespace DefaultNamespace
         }
 
         /// <summary>
-        /// Retrieves a function that can be used on a binary search tree to find the interval that the given segment starts in
+        /// Retrieves a function that can be used on a binary search tree to find the interval that the given point lies in
         /// </summary>
         /// <typeparam name="F"></typeparam>
         /// <param name="segment"></param>
@@ -692,56 +679,22 @@ namespace DefaultNamespace
         ///     -1 points towards the left of the left-most interval it's in,
         ///     1 points towards the right of the right-most interval it's in
         ///
-        /// Note that a segment may start in multiple intervals, because intervals may have 0 width. 
+        /// Note that a point may fall in multiple intervals, because intervals may have 0 width and the point can lie on boundaries. 
         /// </param>
         /// <returns></returns>
-        public static Func<FaceInterval<F>, int> GetIntervalFinder<F>(Segment segment, int steer) where F: SimplePolygon
+        public static Func<FaceInterval<F>, int> GetIntervalFinder<F>(Vertex point, int steer) where F: SimplePolygon
         {
             return (i) =>
             {
-                bool onLeft = false; // Whether the start point lies on the left of the interval
-                bool onRight = false; // Whether the start point lies on the right of the interval
-                if (i.Left == null && i.Right != null)
+                if (i.Left != null)
                 {
-                    int side = i.Right.GetSideOfPoint(segment.StartPoint);
-                    if (side == -1) return steer;
-                    if (side == 1) return 1;
-                    onRight = true;
-                }
-                else if (i.Left != null && i.Right == null)
-                {
-                    int side = i.Left.GetSideOfPoint(segment.StartPoint);
-                    if (side == -1) return -1;
-                    if (side == 1) return steer;
-                    onLeft = true;
-                }
-                else if (i.Left == null && i.Right == null)
-                {
-                    return steer;
-                }
-                else
-                {
-                    int leftSide = i.Left.GetSideOfPoint(segment.StartPoint);
-                    if (leftSide == -1) return -1;
-                    if (leftSide == 0) onLeft = true;
-
-                    int rightSide = i.Right.GetSideOfPoint(segment.StartPoint);
-                    if (rightSide == 1) return 1;
-                    if (rightSide == 0) onRight = true;
-
-                    if (leftSide == 1 && rightSide == -1) return steer;
-                }
-
-                // The start point lies on a boundary, check if the endpoint goes in/through the boundary
-                if (i.Left != null && onLeft)
-                {
-                    int side = i.Left.GetSideOfPoint(segment.EndPoint);
+                    int side = i.Left.GetSideOfPoint(point);
                     if (side == -1) return -1;
                 }
 
-                if (i.Right != null && onRight)
+                if (i.Right != null)
                 {
-                    int side = i.Right.GetSideOfPoint(segment.EndPoint);
+                    int side = i.Right.GetSideOfPoint(point);
                     if (side == 1) return 1;
                 }
 
@@ -791,15 +744,20 @@ namespace DefaultNamespace
                 return a.ID - b.ID;
             });
         }
+
+        /// <summary>
+        /// A type to label the different event points
+        /// </summary>
+        private enum PointType
+        {
+            start,
+            split,
+            leftContinue,
+            rightContinue,
+            stop,
+            merge
+        }
     }
 
-    public enum PointType
-    {
-        start,
-        split,
-        leftContinue,
-        rightContinue,
-        stop,
-        merge
-    }
+    
 }
