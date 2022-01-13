@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using DefaultNamespace;
 using UnityEngine;
+using UnityEngine.Assertions;
 using UnityEngine.UIElements;
 using Slider = UnityEngine.UI.Slider;
 
@@ -31,7 +32,7 @@ public class Camera : MonoBehaviour
     private double _angle; // <- Should not be used directly, but should only be used by the Angle property.
 
     //Angle of view of the camera, half of it on both sides of the viewing angle.
-    private const double _angleOfView = 90;
+    [SerializeField] private double _angleOfView = 90;
 
     public Camera(Vertex position, double angle = 0)
     {
@@ -56,18 +57,24 @@ public class Camera : MonoBehaviour
     /// </summary>
     /// <param name="floorplan"></param>
     /// <returns></returns>
-    public IEnumerable<PolygonVertex> CalculateView(Floorplan floorplan)
+    public SimplePolygon CalculateView(Floorplan floorplan)
     {
+        //Somethoe unity just sets it to 0 somehow, manually set it to 90 for now
+        if(_angleOfView == 0)
+        {
+            _angleOfView = 90;
+        }
+
         //Method is sometimes called while the postion is not yet set, just return null for now
         if(Position == null)
         {
-            return null;
+            throw new NullReferenceException("Position is null");
         }
 
         //These will cause issues if the the angle of view causes the min/max angle to flip arround 0/360 degrees.
         //Rotate it 90 degrees since this script assumes 0 degrees to to the dead right instead of up (Might want to change this to make it consistent)
-        double minAngle = ((Angle + 90) % 360 - _angleOfView / 2) * Mathf.Deg2Rad;
-        double maxAngle = ((Angle + 90) % 360 + _angleOfView / 2) * Mathf.Deg2Rad;
+        double minAngle = (Angle - _angleOfView / 2) * Mathf.Deg2Rad;
+        double maxAngle = (Angle + _angleOfView / 2) * Mathf.Deg2Rad;
 
         //We first need a list of all edges
         var edges = floorplan.SimplePolygon
@@ -85,106 +92,119 @@ public class Camera : MonoBehaviour
         GroupedVertices.Add(new Tuple<double, List<Tuple<Vertex, Edge>>>(minAngle, new List<Tuple<Vertex, Edge>>()));
         GroupedVertices.Add(new Tuple<double, List<Tuple<Vertex, Edge>>>(maxAngle, new List<Tuple<Vertex, Edge>>()));
 
-        GroupedVertices = GroupedVertices.OrderBy(x => x.Item1).ToList();
+        //GroupedVertices = GroupedVertices.OrderBy(x => x.Item1).ToList();
+
+        //First sort the vertices with an angle >= the min angle, then add the vertices with a smaller angle in reverse order
+        var testGroupedVertices = GroupedVertices.Where(x => x.Item1 >= minAngle).OrderBy(x => x.Item1).ToList();
+        testGroupedVertices.AddRange(GroupedVertices.Where(x => x.Item1 < minAngle).OrderBy(x => x.Item1));
 
         //Initialize the bbst NOTE: this currently still just is a list which gets sorted after each operation, obviously not efficient yet.
-        List<Edge> bbst = new List<Edge>();
-        List<PolygonVertex> result = new List<PolygonVertex>();
+        List<Edge> bst = new List<Edge>();
+        List<Vertex> result = new List<Vertex>();
 
-        //Initialization, find edges that intersect the start of the sweepline, we add these edges to the bbst at the start.
+        //Initialization, find edges that intersect the start of the sweepline, we add these edges to the bst at the start.
         foreach(var edge in edges)
         {
-            int startQuadrant = GetQuadrant(edge.StartPoint);
-            int endQuadrant = GetQuadrant(edge.EndPoint);
-
-            if (startQuadrant == 1 || endQuadrant == 1)
+            if(edge.GetAngleIntersection(minAngle, Position) != null)
             {
-                if(endQuadrant == 4 || startQuadrant == 4)
-                {
-                    //Edge intersects the start of the linesweep
-                    //Add the vertex that starts in the 4th quadrant in the initialized bbst
-                    bbst.Add(edge);
-                }
-
-                if(startQuadrant == 3 || endQuadrant == 3)
-                {
-                    //line goes from quadrant 1 to 3, we have to make sure it goes below the camera,
-                    //if that is the case, then the start of the sweepline also intersects it.
-
-                    Vertex start = startQuadrant == 1 ? edge.StartPoint : edge.EndPoint;
-                    Vertex end = startQuadrant == 1 ? edge.EndPoint : edge.StartPoint;
-
-                    //Start is q1, end in q3, so if the camera is to the left of this line then the line goes below the camera
-                    if(new Vertex(Position.X, Position.Y).GetSideOfLine(start, end).Result == -1)
-                    {
-                        bbst.Add(edge);
-                    }
-                }
+                bst.Add(edge);
             }
         }
 
-        //Sort the bbst, obviously gets removed once I actually implement a BBST
-        bbst = bbst.OrderBy(x => x.DistanceAt(Position, 0)).ToList();
+        //Sort the bbst, obviously gets removed once I actually implement a BST
+        bst = bst.OrderBy(x => x.DistanceAt(Position, minAngle)).ToList();
 
         //Add the position of the camera to the result, this is the first (and last part of the polygon)
-        result.Add(new PolygonVertex(Position.X, Position.Y, new List<PolygonVertex>()));
+        result.Add(new Vertex(Position.X, Position.Y));
 
         //Second round we actually add vertices to the result at the start and end of each group / angle
         foreach(var group in GroupedVertices)
         {
             double angle = group.Item1;
             List<Tuple<Vertex, Edge>> vertices = group.Item2;
-            PolygonVertex firstVertex = null;
 
             //Add the current leader at the start of a group
             //Only if the sweepline is within the viewing angle of the camera
-            if (bbst.Count > 0 && angle >= minAngle && angle <= maxAngle)
+            if (bst.Count > 0 && angle >= minAngle && angle <= maxAngle)
             {
-                firstVertex = bbst.First().GetAngleIntersection(angle, Position);
-                result.Add(firstVertex);
+                var leader = bst.First();
+                                
+                //If the leader is of an edge to be removed in the group, then we can just pick the endpoint as vertex to add
+                if(vertices.Any(x => x.Item1 == leader.EndPoint))
+                {
+                    if (result.Count == 0 || !result.Last().SamePositionAs(leader.EndPoint))
+                    {
+                        result.Add(leader.EndPoint);
+                    }
+                }
+                else
+                {
+                    //Else we have to compute the vertex
+                    Vertex firstVertex = leader.GetAngleIntersection(angle, Position);
+                    if (firstVertex == null)
+                    {
+                        //This should not happen
+                    }
+                    else if (result.Count == 0 || !result.Last().SamePositionAs(firstVertex))
+                    {
+                        result.Add(firstVertex);
+                    }
+
+
+                }
             }
 
             foreach (var vertexEdge in vertices)
             {
-                Vertex vertex = vertexEdge.Item1;
                 Edge edge = vertexEdge.Item2;
 
-                if (!bbst.Remove(edge))
+                if (!bst.Remove(edge))
                 {
-                    bbst.Add(edge);
+                    bst.Add(edge);
                 }
-
-                bbst = bbst.OrderBy(x => x.DistanceAt(Position, angle)).ToList();
             }
+
+            bst = bst.OrderBy(x => x.DistanceAt(Position, angle)).ToList();
 
             //Again add the current edge in the front, could be the same as the one added at the start
             //Only if the sweepline is within the viewing angle of the camera
-            if (bbst.Count > 0 && angle >= minAngle && angle <= maxAngle)
+            if (bst.Count > 0 && angle >= minAngle && angle <= maxAngle)
             {
-                PolygonVertex secondVertex = bbst.First().GetAngleIntersection(angle, Position);
-                //Only add this second vertex in the group if it is not the same as the first
-                if (firstVertex == null || !firstVertex.SamePositionAs(secondVertex))
+                var leader = bst.First();
+
+                //If the leader is part of the edges just added, simply add this start vertex
+                if(vertices.Any(x => x.Item1 == leader.StartPoint))
                 {
-                    result.Add(secondVertex);
+                    result.Add(leader.StartPoint);
                 }
+                else
+                {
+                    //The new vertex is not the start vertex of the leader, so we have to find it
+                    Vertex secondVertex = leader.GetAngleIntersection(angle, Position);
+                    //Only add this second vertex in the group if it is not the same as the first
+                    if (secondVertex == null)
+                    {
+                        //Should not happen
+                    }
+                    else if (result.Count == 0 || result.Last().SamePositionAs(secondVertex))
+                    {
+                        result.Add(secondVertex);
+                    }
+                }
+            }
+
+            //If we just handled group with the maxAngle,
+            //we break the loop since further points won't be in the result anyway
+            if(angle == maxAngle)
+            {
+                break;
             }
         }
 
         //Add the camera again, it also is the last vertex of the polygon
-        result.Add(new PolygonVertex(Position.X, Position.Y, new List<PolygonVertex>()));
+        result.Add(new Vertex(Position.X, Position.Y));
 
-        //Round all vertices coordinates to 10 decimals, again ugly, but seems to fix some issues, Might want to remove the rounding?
-        //Also set the polygon vertex following vertices correctly
-        for (int i=0; i<result.Count(); i++)
-        {
-            result[i] = new PolygonVertex(
-                Math.Round(result[i].X, 10),
-                Math.Round(result[i].X, 10),
-                result.Skip(i + 1)
-                );
-        }
-
-        return result;
+        return new SimplePolygon(result);
     }
 
     /// <summary>

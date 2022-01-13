@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Numerics;
+using Util.Geometry;
 
 namespace DefaultNamespace
 {
@@ -22,11 +24,19 @@ namespace DefaultNamespace
         /// <returns>The distance of the line segment at the angle</returns>
         public double DistanceAt(Vertex camera, double angle)
         {
-            Vertex intersection = GetAngleIntersection(angle, camera);
+            try
+            {
+                Vertex intersection = GetAngleIntersection(angle, camera);
 
-            double xdistance = intersection.X - camera.X;
-            double ydistance = intersection.Y - camera.Y;
-            return Math.Sqrt(xdistance * xdistance + ydistance * ydistance);
+                double xdistance = intersection.X - camera.X;
+                double ydistance = intersection.Y - camera.Y;
+                return Math.Sqrt(xdistance * xdistance + ydistance * ydistance);
+            }
+            catch(Exception ex)
+            {
+                //Should not happen
+                return double.MaxValue;
+            }
         }
 
         /// <summary>
@@ -35,31 +45,27 @@ namespace DefaultNamespace
         /// <param name="angle">The angle from the camera</param>
         /// <param name="camera">The position of the camera</param>
         /// <returns>A vertex of the position of the intersection</returns>
-        public PolygonVertex GetAngleIntersection(double angle, Vertex camera)
+        public Vertex GetAngleIntersection(double angle, Vertex camera)
         {
-            double cos = Math.Sin(angle * Math.PI);
-            double sin = Math.Cos(angle * Math.PI);
+            //Rotate the angle 90 degrees
+            var rotated = angle - Math.PI / 2;
 
-            Edge line1 = this;
-            Edge line2 = new Edge(new PolygonVertex(camera.X, camera.Y, new List<PolygonVertex>()), new PolygonVertex(camera.X + 1000 * sin, camera.Y + 1000 * cos, new List<PolygonVertex>()));
+            double sin = Math.Sin(rotated);
+            double cos = Math.Cos(rotated);
 
-            var xdiff = (line1.StartPoint.X - line1.EndPoint.X, line2.StartPoint.X - line2.EndPoint.X);
-            var ydiff = (line1.StartPoint.Y - line1.EndPoint.Y, line2.StartPoint.Y - line2.EndPoint.Y);
+            //Create a line segment for the camera with an somewhat arbitrary length
+            //The line segment should be larger than any floorplan will be, so just take a large value
+            var cameraLineSegment = new LineSegment(camera.ToVector2(), new Vertex(camera.X + 10000 * sin, camera.Y - 10000 * cos).ToVector2());
+            var edgeLineSegment = new LineSegment(StartPoint.ToVector2(), EndPoint.ToVector2());
 
-            var div = GeometricHelper.Determinant(xdiff, ydiff);
+            var result = LineSegment.Intersect(cameraLineSegment, edgeLineSegment);
+            if (!result.HasValue)
+            {
+                //Intersection not found (null since this is used to determine the start intersections of the sweepline)
+                return null;
+            }
 
-            var d = (GeometricHelper.Determinant((line1.StartPoint.X, line1.StartPoint.Y), (line1.EndPoint.X, line1.EndPoint.Y)), GeometricHelper.Determinant((line2.StartPoint.X, line2.StartPoint.Y), (line2.EndPoint.X, line2.EndPoint.Y)));
-            var x = GeometricHelper.Determinant(d, xdiff) / div;
-            var y = GeometricHelper.Determinant(d, ydiff) / div;
-
-            //Due to rounding issues, if the x/y diff is really small due to rounding when it should actually be 0,
-            //this can cause x/y to be extremely large even though it should be 0. So we somehow needt to prevent this.
-            //Rather ugly, but seems to solve some of the annoying rounding issues
-            //This values are rather arbitrary, but seem to work well so far. 
-            if (x > int.MaxValue / 10000) x = 0;
-            if (y > int.MaxValue / 10000) y = 0;
-
-            return new PolygonVertex(x, y, new List<PolygonVertex>());
-        }
+            return new Vertex(result.Value.x, result.Value.y);
+       }
     }
 }
