@@ -92,11 +92,7 @@ public class Floorplan : MonoBehaviour
     /// </summary>
     public async Task CalculateView()
     {
-        this.Cameras.Where(x => x.Position != null).ToList().ForEach(c =>
-        {
-            c.floorplan = this;
-            c.CalculateView();
-        });
+        
         // TODO: To be implemented by Damian M. Buzink
     }
 

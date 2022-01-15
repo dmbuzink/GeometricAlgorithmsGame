@@ -34,6 +34,7 @@ public class Camera : MonoBehaviour
     public Camera(Vertex position, double angle = 0)
     {
         this.Position = position;
+        this.floorplan = floorplan;
     }
 
     // Start is called before the first frame update
@@ -51,6 +52,14 @@ public class Camera : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        this._lineRenderer.loop = true;
+        this._lineRenderer.startWidth = 0.1f;
+        this._lineRenderer.endWidth = 0.1f;
+        this._lineRenderer.startColor = Color.red;
+        this._lineRenderer.endColor = Color.red;
+        this.CalculateView();
+        if (this.cameraView!=null) 
+            StartCoroutine(DrawCamera());
     }
 
     private IEnumerator DrawCamera()
@@ -68,9 +77,7 @@ public class Camera : MonoBehaviour
     /// <summary>
     /// Calculates the the are that can be viewed by the camera based on the floorplan
     /// </summary>
-    /// <param name="floorplan"></param>
-    /// <returns></returns>
-    public SimplePolygon CalculateView(Floorplan floorplan)
+    public void CalculateView()
     {
         //Somethoe unity just sets it to 0 somehow, manually set it to 90 for now
         if(_angleOfView == 0)
@@ -216,7 +223,6 @@ public class Camera : MonoBehaviour
         result.Add(new Vertex(Position.X, Position.Y));
 
         this.cameraView = new SimplePolygon(result);
-        StartCoroutine(DrawCamera());
     }
 
     /// <summary>

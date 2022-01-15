@@ -94,6 +94,7 @@ public class GameManager : MonoBehaviour
         this._cameraPlacer.gameObject.transform.position = _centerPointOfWorld;
         this._cameraPlacer.gameObject.transform.rotation = Quaternion.Euler(new Vector3(0, 0, 0));
         var newCamera = Instantiate(this._cameraPrefab, _cameraPlacer.transform);
+        newCamera.floorplan = _floorplan;
         this._floorplan.AddCamera(newCamera);
         this._cameraPlacer.SetCamera(newCamera);
         newCamera.onSelected += HandleSelectionOfCamera;
