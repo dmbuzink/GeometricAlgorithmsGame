@@ -186,5 +186,16 @@ namespace DefaultNamespace
             this.root?.GetAll(output);
             return output;
         }
+
+        /// <summary>
+        /// A property to help during debugging
+        /// </summary>
+        private List<D> sorted
+        {
+            get
+            {
+                return GetAll();
+            }
+        }
     }
 }

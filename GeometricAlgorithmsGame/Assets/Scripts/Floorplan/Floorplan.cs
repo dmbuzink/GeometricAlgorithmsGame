@@ -11,7 +11,7 @@ public class Floorplan : MonoBehaviour
 {
     public event Action<int> OnAmountOfCamerasChanged;
     
-    private VerticalDecomposition _verticalDecomposition;
+    private VerticalDecomposition<Segment> _verticalDecomposition;
     public List<Camera> Cameras;
     public SimplePolygon SimplePolygon;
     [SerializeField] private DesiredObject _desiredObject;

@@ -18,19 +18,12 @@ public class Camera : MonoBehaviour
     public Vertex Position { get; set; }
     public double Angle
     {
-        get => this._angle;
-        set
-        {
-            if (value < 0 || value >= 360)
-            {
-                throw new ArgumentException(
-                    "The direction of the camera should be between 0 (inclusive) and 360 (exclusive)");
-            }
-
-            this._angle = value;
+        get 
+        { 
+            var z = this.gameObject.transform.rotation.eulerAngles.z;
+            return z < Mathf.Epsilon ? 0 : 360 - z; 
         }
     }
-    private double _angle; // <- Should not be used directly, but should only be used by the Angle property.
 
     public Floorplan floorplan { get; set; }
     private SimplePolygon cameraView { get; set; }
@@ -41,7 +34,6 @@ public class Camera : MonoBehaviour
     public Camera(Vertex position, double angle = 0)
     {
         this.Position = position;
-        this._angle = angle;
     }
 
     // Start is called before the first frame update
@@ -56,12 +48,9 @@ public class Camera : MonoBehaviour
         this._lineRenderer.endColor = Color.red;
     }
 
-
-
     // Update is called once per frame
     void Update()
     {
-        
     }
 
     private IEnumerator DrawCamera()
@@ -81,7 +70,7 @@ public class Camera : MonoBehaviour
     /// </summary>
     /// <param name="floorplan"></param>
     /// <returns></returns>
-    public void CalculateView()
+    public SimplePolygon CalculateView(Floorplan floorplan)
     {
         //Somethoe unity just sets it to 0 somehow, manually set it to 90 for now
         if(_angleOfView == 0)
