@@ -13,7 +13,8 @@ public class Camera : MonoBehaviour
 {
     public event Action<Camera> onSelected;
     [SerializeField] private BoxCollider2D _selectionCollider;
-    
+    private LineRenderer _lineRenderer;
+
     public Vertex Position { get; set; }
     public double Angle
     {
@@ -31,6 +32,9 @@ public class Camera : MonoBehaviour
     }
     private double _angle; // <- Should not be used directly, but should only be used by the Angle property.
 
+    public Floorplan floorplan { get; set; }
+    private SimplePolygon cameraView { get; set; }
+
     //Angle of view of the camera, half of it on both sides of the viewing angle.
     [SerializeField] private double _angleOfView = 90;
 
@@ -44,7 +48,15 @@ public class Camera : MonoBehaviour
     void Start()
     {
         // this._selectionCollider = GetComponent<BoxCollider2D>();
+        this._lineRenderer = gameObject.AddComponent<LineRenderer>();
+        this._lineRenderer.loop = true;
+        this._lineRenderer.startWidth = 0.1f;
+        this._lineRenderer.endWidth = 0.1f;
+        this._lineRenderer.startColor = Color.red;
+        this._lineRenderer.endColor = Color.red;
     }
+
+
 
     // Update is called once per frame
     void Update()
@@ -52,12 +64,24 @@ public class Camera : MonoBehaviour
         
     }
 
+    private IEnumerator DrawCamera()
+    {
+        this._lineRenderer.positionCount = cameraView.Count();
+        for (var i = 0; i < cameraView.Count(); i++)
+        {
+            var vertex = cameraView.ElementAt(i);
+            this._lineRenderer.SetPosition(i, vertex.ToVector3());
+        }
+
+        yield return null;
+    }
+
     /// <summary>
     /// Calculates the the are that can be viewed by the camera based on the floorplan
     /// </summary>
     /// <param name="floorplan"></param>
     /// <returns></returns>
-    public SimplePolygon CalculateView(Floorplan floorplan)
+    public void CalculateView()
     {
         //Somethoe unity just sets it to 0 somehow, manually set it to 90 for now
         if(_angleOfView == 0)
@@ -149,8 +173,6 @@ public class Camera : MonoBehaviour
                     {
                         result.Add(firstVertex);
                     }
-
-
                 }
             }
 
@@ -204,7 +226,8 @@ public class Camera : MonoBehaviour
         //Add the camera again, it also is the last vertex of the polygon
         result.Add(new Vertex(Position.X, Position.Y));
 
-        return new SimplePolygon(result);
+        this.cameraView = new SimplePolygon(result);
+        StartCoroutine(DrawCamera());
     }
 
     /// <summary>
@@ -223,36 +246,5 @@ public class Camera : MonoBehaviour
     public void SetColliderActive(bool isActive)
     {
         this._selectionCollider.enabled = isActive;
-    }
-
-    /// <summary>
-    /// Determine the quadrant of a vertex compared to a camera
-    /// </summary>
-    /// <param name="vertex">Vertex of which to determine the quadrant</param>
-    /// <returns>1,2,3 or 4</returns>
-    private int GetQuadrant(Vertex vertex)
-    {
-        if (vertex.Y > Position.Y)
-        {
-            if (vertex.X > Position.X)
-            {
-                return 1;
-            }
-            else
-            {
-                return 2;
-            }
-        }
-        else
-        {
-            if (vertex.X > Position.X)
-            {
-                return 4;
-            }
-            else
-            {
-                return 3;
-            }
-        }
     }
 }
