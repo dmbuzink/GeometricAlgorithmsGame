@@ -125,8 +125,6 @@ public class Camera : MonoBehaviour
         GroupedVertices.Add(new Tuple<double, List<Tuple<Vertex, Edge>>>(minAngle, new List<Tuple<Vertex, Edge>>()));
         GroupedVertices.Add(new Tuple<double, List<Tuple<Vertex, Edge>>>(maxAngle, new List<Tuple<Vertex, Edge>>()));
 
-        //GroupedVertices = GroupedVertices.OrderBy(x => x.Item1).ToList();
-
         //First sort the vertices with an angle >= the min angle, then add the vertices with a smaller angle in reverse order
         var testGroupedVertices = GroupedVertices.Where(x => x.Item1 >= minAngle).OrderBy(x => x.Item1).ToList();
         testGroupedVertices.AddRange(GroupedVertices.Where(x => x.Item1 < minAngle).OrderBy(x => x.Item1));
@@ -136,7 +134,7 @@ public class Camera : MonoBehaviour
         List<Vertex> result = new List<Vertex>();
 
         //Initialization, find edges that intersect the start of the sweepline, we add these edges to the bst at the start.
-        foreach(var edge in edges)
+        foreach (var edge in edges)
         {
             if(edge.GetAngleIntersection(minAngle, Position) != null)
             {
@@ -150,6 +148,7 @@ public class Camera : MonoBehaviour
         //Add the position of the camera to the result, this is the first (and last part of the polygon)
         result.Add(new Vertex(Position.X, Position.Y));
 
+
         //Second round we actually add vertices to the result at the start and end of each group / angle
         foreach(var group in testGroupedVertices)
         {
@@ -160,38 +159,23 @@ public class Camera : MonoBehaviour
             //Only if the sweepline is within the viewing angle of the camera
             if (bst.Count > 0)
             {
-                result.Add(bst.First().GetAngleIntersection(angle, Position));
-
-                //var leader = bst.First();
-
-                ////If the leader is of an edge to be removed in the group, then we can just pick the endpoint as vertex to add
-                //if(vertices.Any(x => x.Item1 == leader.EndPoint))
-                //{
-                //    if (result.Count == 0 || !result.Last().SamePositionAs(leader.EndPoint))
-                //    {
-                //        result.Add(leader.EndPoint);
-                //    }
-                //}
-                //else
-                //{
-                //    //Else we have to compute the vertex
-                //    Vertex firstVertex = leader.GetAngleIntersection(angle, Position);
-                //    if (firstVertex == null)
-                //    {
-                //        //This should not happen
-                //    }
-                //    else if (result.Count == 0 || !result.Last().SamePositionAs(firstVertex))
-                //    {
-                //        result.Add(firstVertex);
-                //    }
-                //}
+                var newVertex = bst.First().GetAngleIntersection(angle, Position);
+                if (result == null || (newVertex != null && !result.Last().SamePositionAs(newVertex)))
+                {
+                    result.Add(newVertex);
+                }
             }
 
             foreach (var vertexEdge in vertices)
             {
                 Edge edge = vertexEdge.Item2;
 
-                if (!bst.Remove(edge))
+                var edgeToRemove = bst.FirstOrDefault(x => x.StartPoint.X == edge.StartPoint.X &&
+                    x.StartPoint.Y == edge.StartPoint.Y &&
+                    x.EndPoint.X == edge.EndPoint.X 
+                    && x.EndPoint.Y == edge.EndPoint.Y);
+
+                if (!bst.Remove(edgeToRemove))
                 {
                     bst.Add(edge);
                 }
@@ -203,32 +187,11 @@ public class Camera : MonoBehaviour
             //Only if the sweepline is within the viewing angle of the camera
             if (bst.Count > 0)
             {
-                result.Add(bst.First().GetAngleIntersection(angle, Position));
-
-
-                //Vertex secondVertex = bst.First().GetAngleIntersection(angle, Position);
-                ////Only add this second vertex in the group if it is not the same as the first
-                //if (secondVertex == null)
-                //{
-                //    //Should not happen
-                //}
-                //else if (result.Count == 0 || result.Last().SamePositionAs(secondVertex))
-                //{
-                //    result.Add(secondVertex);
-                //}
-
-                //var leader = bst.First();
-
-                ////If the leader is part of the edges just added, simply add this start vertex
-                //if(vertices.Any(x => x.Item1 == leader.StartPoint))
-                //{
-                //    result.Add(leader.StartPoint);
-                //}
-                //else
-                //{
-                //    //The new vertex is not the start vertex of the leader, so we have to find it
-
-                //}
+                var newVertex = bst.First().GetAngleIntersection(angle, Position);
+                if (result == null || (newVertex != null && !result.Last().SamePositionAs(newVertex)))
+                {
+                    result.Add(newVertex);
+                }
             }
 
             //If we just handled group with the maxAngle,
@@ -239,12 +202,7 @@ public class Camera : MonoBehaviour
             }
         }
 
-        result = result.Where(x => x != null).ToList();
-
-        //Add the camera again, it also is the last vertex of the polygon
-        result.Add(new Vertex(Position.X, Position.Y));
-
-        this.cameraView = new SimplePolygon(result);
+        this.cameraView = new SimplePolygon(result.Where(x => x != null));
     }
 
     /// <summary>
