@@ -1,19 +1,21 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using DefaultNamespace;
 using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.UIElements;
+using Debug = UnityEngine.Debug;
 using Slider = UnityEngine.UI.Slider;
 
 public class Camera : MonoBehaviour
 {
     public event Action<Camera> onSelected;
     [SerializeField] private BoxCollider2D _selectionCollider;
-    private LineRenderer _lineRenderer;
+    [SerializeField] private LineRenderer _lineRenderer;
 
     public Vertex Position { get; set; }
     public double Angle
@@ -22,6 +24,14 @@ public class Camera : MonoBehaviour
         { 
             var z = this.gameObject.transform.rotation.eulerAngles.z;
             return z < Mathf.Epsilon ? 0 : 360 - z; 
+        }
+    }
+    public double AngleCounterClockwise
+    {
+        get
+        {
+            var z = this.gameObject.transform.rotation.eulerAngles.z;
+            return z;
         }
     }
 
@@ -41,22 +51,15 @@ public class Camera : MonoBehaviour
     void Start()
     {
         // this._selectionCollider = GetComponent<BoxCollider2D>();
-        this._lineRenderer = gameObject.AddComponent<LineRenderer>();
+        this._lineRenderer = gameObject.GetComponent<LineRenderer>();
         this._lineRenderer.loop = true;
         this._lineRenderer.startWidth = 0.1f;
         this._lineRenderer.endWidth = 0.1f;
-        this._lineRenderer.startColor = Color.red;
-        this._lineRenderer.endColor = Color.red;
     }
 
     // Update is called once per frame
     void Update()
     {
-        this._lineRenderer.loop = true;
-        this._lineRenderer.startWidth = 0.1f;
-        this._lineRenderer.endWidth = 0.1f;
-        this._lineRenderer.startColor = Color.red;
-        this._lineRenderer.endColor = Color.red;
         this.CalculateView();
         if (this.cameraView!=null) 
             StartCoroutine(DrawCamera());
@@ -91,10 +94,11 @@ public class Camera : MonoBehaviour
             throw new NullReferenceException("Position is null");
         }
 
+        
         //These will cause issues if the the angle of view causes the min/max angle to flip arround 0/360 degrees.
         //Rotate it 90 degrees since this script assumes 0 degrees to to the dead right instead of up (Might want to change this to make it consistent)
-        double minAngle = (Angle - _angleOfView / 2) * Mathf.Deg2Rad;
-        double maxAngle = (Angle + _angleOfView / 2) * Mathf.Deg2Rad;
+        double minAngle = (AngleCounterClockwise - _angleOfView / 2) * Mathf.Deg2Rad;
+        double maxAngle = (AngleCounterClockwise + _angleOfView / 2) * Mathf.Deg2Rad;
 
         //We first need a list of all edges
         var edges = floorplan.SimplePolygon
@@ -138,7 +142,7 @@ public class Camera : MonoBehaviour
         result.Add(new Vertex(Position.X, Position.Y));
 
         //Second round we actually add vertices to the result at the start and end of each group / angle
-        foreach(var group in GroupedVertices)
+        foreach(var group in testGroupedVertices)
         {
             double angle = group.Item1;
             List<Tuple<Vertex, Edge>> vertices = group.Item2;
