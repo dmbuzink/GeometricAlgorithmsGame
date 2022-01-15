@@ -73,10 +73,10 @@ public class GameManager : MonoBehaviour
         // Choose biggest + margin
 
         var halfYRange = (maxY - minY) / 2;
-        const double widthToHeighRatio = 1080f / 1920f;
+        const double widthToHeightRatio = 1080f / 1920f;
         var halfXRange = (maxX - minX) / 2;
 
-        var cameraSize = (float) Math.Max(halfYRange, halfXRange * widthToHeighRatio);
+        var cameraSize = (float) Math.Max(halfYRange, halfXRange * widthToHeightRatio);
         this._unityCamera.gameObject.transform.localPosition = new Vector3( (float)(minX + halfXRange), 
             (float) (minY + halfYRange), -10);
         this._unityCamera.orthographicSize = cameraSize + CameraSizeMargin;

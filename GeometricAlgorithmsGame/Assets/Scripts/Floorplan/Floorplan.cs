@@ -51,8 +51,8 @@ public class Floorplan : MonoBehaviour
         this._lineRenderer.loop = true;
         this._lineRenderer.startWidth = 0.1f;
         this._lineRenderer.endWidth = 0.1f;
-        this._lineRenderer.startColor = Color.blue;
-        this._lineRenderer.endColor = Color.blue;
+        this._lineRenderer.startColor = Color.magenta;
+        this._lineRenderer.endColor = Color.magenta;
         StartCoroutine(DrawFloorplan());
     }
 
