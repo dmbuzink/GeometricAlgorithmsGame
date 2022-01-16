@@ -11,14 +11,14 @@ public class Floorplan : MonoBehaviour
 {
     public event Action<int> OnAmountOfCamerasChanged;
     
-    private VerticalDecomposition<Segment> _verticalDecomposition;
+    private RegionArrangement<CombinedFace<SimplePolygon>> _regions;
     public List<Camera> Cameras;
-    public SimplePolygon SimplePolygon;
+    public FloorFace SimplePolygon;
     [SerializeField] private DesiredObject _desiredObject;
     [SerializeField] private Entrance _entrance;
     private LineRenderer _lineRenderer;
 
-    public Floorplan(SimplePolygon simplePolygon, DesiredObject desiredObject, Entrance entrance)
+    public Floorplan(FloorFace simplePolygon, DesiredObject desiredObject, Entrance entrance)
     {
         this.SimplePolygon = simplePolygon;
         this._desiredObject = desiredObject;
@@ -31,7 +31,7 @@ public class Floorplan : MonoBehaviour
     /// <param name="simplePolygon"></param>
     /// <param name="desiredObject"></param>
     /// <param name="entrance"></param>
-    public async Task SetUp(SimplePolygon simplePolygon, Vertex desiredObjectVertex,
+    public async Task SetUp(FloorFace simplePolygon, Vertex desiredObjectVertex,
         Vertex entranceVertex)
     {
         SimplePolygon = simplePolygon;
@@ -53,28 +53,12 @@ public class Floorplan : MonoBehaviour
         this._lineRenderer.endWidth = 0.1f;
         this._lineRenderer.startColor = Color.magenta;
         this._lineRenderer.endColor = Color.magenta;
-        StartCoroutine(DrawFloorplan());
+        SimplePolygon.Draw(this._lineRenderer);
     }
 
     // Update is called once per frame
     void Update()
     {
-    }
-    
-    /// <summary>
-    /// Draws the simple polygon making up the floorplan
-    /// </summary>
-    /// <returns></returns>
-    private IEnumerator DrawFloorplan()
-    {
-        this._lineRenderer.positionCount = SimplePolygon.Count();
-        for (var i = 0; i < SimplePolygon.Count(); i++)
-        {
-            var vertex = SimplePolygon.ElementAt(i);
-            this._lineRenderer.SetPosition(i, vertex.ToVector3());
-        }
-
-        yield return null;
     }
 
     /// <summary>
@@ -92,8 +76,31 @@ public class Floorplan : MonoBehaviour
     /// </summary>
     public async Task CalculateView()
     {
-        
-        // TODO: To be implemented by Damian M. Buzink
+        float outerPadding = 100;
+        (float minX, float maxX, float minY, float maxY) = this.SimplePolygon.GetBoundingBox();
+        List<Vertex> outerPoints = new List<Vertex>(new[]
+        {
+            new Vertex(minX - outerPadding, minY - outerPadding),
+            new Vertex(maxX + outerPadding, minY - outerPadding),
+            new Vertex(maxX + outerPadding, maxY + outerPadding),
+            new Vertex(minX - outerPadding, maxY + outerPadding),
+        });
+        OuterFace outerFace = new OuterFace(outerPoints);
+
+        List<SimplePolygon> polygons = new List<SimplePolygon>(new SimplePolygon[]
+        {
+            outerFace,
+            this.SimplePolygon
+        });
+        foreach(Camera camera in this.Cameras)
+        {
+            CameraFace view = camera.cameraView;
+            if(view!=null) polygons.Add(view);
+        }
+
+        List<CombinedFace<SimplePolygon>> combinedFaces = FaceCombiner.CombineFaces(polygons);
+
+        _regions = await RegionArrangement<CombinedFace<SimplePolygon>>.CreateRegionArrangement(combinedFaces);
     }
 
     /// <summary>
@@ -102,8 +109,27 @@ public class Floorplan : MonoBehaviour
     /// <returns></returns>
     public async Task<float> GetPercentageOfFloorplanInView()
     {
-        // TODO: To be implemented by Damian M. Buzink
-        throw new ArgumentException();
+        if (this._regions == null)
+        {
+            throw new Exception("The regions should be calculated first by calling CalculateView");
+        }
+        
+        Dictionary<CombinedFace<SimplePolygon>, double> areas = this._regions.CalculateAreas();
+        double totalArea = 0;
+        double cameraArea = 0;
+
+        foreach(CombinedFace<SimplePolygon> region in areas.Keys)
+        {
+            double area = areas[region];
+            bool containsCamera = region.Sources.Find(source => source is CameraFace) != null;
+            bool containsFloorPlan = region.Sources.Find(source => source is FloorFace) != null;
+            if (containsCamera) cameraArea += area;
+            if (containsFloorPlan) totalArea += area;
+            Debug.Log(area +" "+ containsFloorPlan + " "+containsCamera);
+        }
+        Debug.Log(totalArea+"  "+ cameraArea);
+
+        return (float)(cameraArea / totalArea);
     }
 
     /// <summary>
@@ -125,7 +151,6 @@ public class Floorplan : MonoBehaviour
     {
         this.Cameras.Add(cam);
         this.OnAmountOfCamerasChanged?.Invoke(this.Cameras.Count);
-        CalculateView().Wait();
     }
 
     /// <summary>

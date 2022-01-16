@@ -211,11 +211,11 @@ namespace DefaultNamespace
                     trapezoid.Top
                 );
 
-                startTrapezoid.LTN = startTrapezoid.LTN;
+                startTrapezoid.LTN = trapezoid.LTN;
                 startTrapezoid.RTN = above;
                 above.LTN = startTrapezoid;
 
-                startTrapezoid.LBN = startTrapezoid.LBN;
+                startTrapezoid.LBN = trapezoid.LBN;
                 startTrapezoid.RBN = below;
                 below.LBN = startTrapezoid;
 
@@ -255,11 +255,11 @@ namespace DefaultNamespace
                     trapezoid.Top
                 );
 
-                endTrapezoid.RTN = endTrapezoid.RTN;
+                endTrapezoid.RTN = trapezoid.RTN;
                 endTrapezoid.LTN = above;
                 above.RTN = endTrapezoid;
 
-                endTrapezoid.RBN = endTrapezoid.RBN;
+                endTrapezoid.RBN = trapezoid.RBN;
                 endTrapezoid.LBN = below;
                 below.RBN = endTrapezoid;
 

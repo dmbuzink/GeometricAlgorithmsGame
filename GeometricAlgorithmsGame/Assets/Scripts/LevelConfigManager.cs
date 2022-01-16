@@ -58,6 +58,6 @@ namespace DefaultNamespace
         public Vertex DesiredObject { get; set; }
         public IEnumerable<Vertex> Vertices { get; set; }
 
-        public SimplePolygon GetSimplePolygon() => new SimplePolygon(Vertices);
+        public FloorFace GetSimplePolygon() => new FloorFace(Vertices);
     }
 }

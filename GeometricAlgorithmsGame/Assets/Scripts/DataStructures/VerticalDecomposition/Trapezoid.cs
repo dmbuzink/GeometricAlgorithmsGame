@@ -1,5 +1,7 @@
 
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace DefaultNamespace
 {
@@ -56,6 +58,11 @@ namespace DefaultNamespace
         /// <returns></returns>
         public double GetArea()
         {
+            if (this.Left == null || this.Right == null || this.Bottom == null || this.Top == null)
+            {
+                return 0;
+            }
+
             double topLeftY = this.GetYCoordinate(this.Left.X, this.Top);
             double topRightY = this.GetYCoordinate(this.Right.X, this.Top);
             double bottomLeftY = this.GetYCoordinate(this.Left.X, this.Bottom);
@@ -65,7 +72,11 @@ namespace DefaultNamespace
             double rightHeight = topRightY - bottomRightY;
             double width = Right.X - Left.X;
 
-            double area = width * (leftHeight + rightHeight) / 2; 
+            double area = width * (leftHeight + rightHeight) / 2;
+            //if (area < 0)
+            //{
+            //    Debugger.Break();
+            //}
             return area;
         }
 

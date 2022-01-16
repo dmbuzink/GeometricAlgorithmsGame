@@ -36,7 +36,7 @@ public class Camera : MonoBehaviour
     }
 
     public Floorplan floorplan { get; set; }
-    private SimplePolygon cameraView { get; set; }
+    public CameraFace cameraView { get; set; }
 
     //Angle of view of the camera, half of it on both sides of the viewing angle.
     [SerializeField] private double _angleOfView = 90;
@@ -202,7 +202,7 @@ public class Camera : MonoBehaviour
             }
         }
 
-        this.cameraView = new SimplePolygon(result.Where(x => x != null));
+        this.cameraView = new CameraFace(new List<Camera>(new []{this}), result.Where(x => x != null));
     }
 
     /// <summary>

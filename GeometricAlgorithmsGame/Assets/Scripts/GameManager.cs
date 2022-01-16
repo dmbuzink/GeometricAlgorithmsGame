@@ -138,8 +138,19 @@ public class GameManager : MonoBehaviour
     /// </summary>
     private async Task ConfirmAllCamerasAsync()
     {
-        // TODO: To be implemented by Damian M. Buzink
-        throw new NotImplementedException();
+        Debug.Log("Oof");
+        await this._floorplan.CalculateView();
+        Debug.Log("Shit");
+        try
+        {
+            float percentage = await this._floorplan.GetPercentageOfFloorplanInView();
+            Debug.Log(percentage);
+
+        }
+        catch (Exception e)
+        {
+            Debug.Log(e);
+        }
     }
 
     /// <summary>
