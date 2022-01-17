@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using UnityEngine;
 
 namespace DefaultNamespace
 {
@@ -30,16 +31,8 @@ namespace DefaultNamespace
                 return a.ID - b.ID;
             });
 
-            BinarySearchTree<FaceInterval<F>> scanLine = new BinarySearchTree<FaceInterval<F>>((ai, bi) =>
+            Func<IntervalBoundary<F>, IntervalBoundary<F>, int> getBoundarySide = (a, b) =>
             {
-                IntervalBoundary<F> a = ai.Left;
-                IntervalBoundary<F> b = bi.Left;
-
-                // Only the left most interval has no left boundary, of which only 1 can exist
-                if (a == null && b == null) return 0;
-                if (a == null) return -1;
-                if (b == null) return 1;
-                
                 int aStartSide = b.GetSideOfPoint(a.StartPoint);
                 int aEndSide = b.GetSideOfPoint(a.EndPoint);
 
@@ -51,6 +44,24 @@ namespace DefaultNamespace
                 if (bStartSide != 0) return -bStartSide;
                 int bEndSide = a.GetSideOfPoint(b.EndPoint);
                 if (bEndSide != 0) return -bEndSide;
+
+                return 0;
+            };
+            BinarySearchTree<FaceInterval<F>> scanLine = new BinarySearchTree<FaceInterval<F>>((ai, bi) =>
+            {
+                IntervalBoundary<F> a = ai.Left;
+                IntervalBoundary<F> b = bi.Left;
+
+                // Only the left most interval has no left boundary, of which only 1 can exist
+                if (a == null && b == null) return 0;
+                if (a == null) return -1;
+                if (b == null) return 1;
+
+                // Check whether a is left of b, and make sure that b doesn't also think it's left of a (if it does, the lines are aligned)
+                int sideAOfB = getBoundarySide(a, b);
+                int sideBOfA = getBoundarySide(b, a);
+                if (sideAOfB != 0 && sideAOfB == -sideBOfA)
+                    return sideAOfB;
 
                 // Sort all intervals with the same left boundary arbitrarily by ID
                 return a.ID - b.ID;
@@ -102,6 +113,10 @@ namespace DefaultNamespace
                     FaceCombiner.HandleEvents(eventsAtPoint, scanLine, sections, eventQueue);
                 }
             }
+
+            if (scanLine.GetAll().Count != 1)
+                throw new InvalidDataException(
+                    "Scanline should only contain a single interval when finished");
 
             // Transform the polygon sections to simple polygons and return them
             return FaceCombiner.GenerateFaces(sections);
@@ -344,8 +359,8 @@ namespace DefaultNamespace
                     newRightShape.BottomRight = rightInterval.Shape;
                     rightInterval.Shape.TopRight = newRightShape;
 
-                    FaceCombiner.AddInterval(newLeftInterval, scanLine, sections, eventQueue);
-                    FaceCombiner.AddInterval(newRightInterval, scanLine, sections, eventQueue);
+                    FaceCombiner.AddInterval(newLeftInterval, scanLine, sections, eventQueue, point);
+                    FaceCombiner.AddInterval(newRightInterval, scanLine, sections, eventQueue, point);
                 }
                 else
                 {
@@ -366,12 +381,12 @@ namespace DefaultNamespace
                         rightInterval.Intersection = null;
                     }
 
-                    FaceCombiner.CheckIntersections(leftInterval, eventQueue);
-                    FaceCombiner.CheckIntersections(rightInterval, eventQueue);
+                    FaceCombiner.CheckIntersections(leftInterval, eventQueue, point.Y);
+                    FaceCombiner.CheckIntersections(rightInterval, eventQueue, point.Y);
                 }
 
                 foreach (FaceInterval<F> interval in newIntervals)
-                    FaceCombiner.AddInterval(interval, scanLine, sections, eventQueue);
+                    FaceCombiner.AddInterval(interval, scanLine, sections, eventQueue, point);
             }
             else
             {
@@ -397,7 +412,7 @@ namespace DefaultNamespace
                 newInterval.Shape.BottomLeft = leftInterval.Shape;
                 newInterval.Shape.BottomRight = rightInterval.Shape;
 
-                FaceCombiner.AddInterval(newInterval, scanLine, sections, eventQueue);
+                FaceCombiner.AddInterval(newInterval, scanLine, sections, eventQueue, point);
             }
         }
 
@@ -523,7 +538,6 @@ namespace DefaultNamespace
         {
             List<IntervalBoundary<F>> cutOff = new List<IntervalBoundary<F>>();
 
-            FaceInterval<F> prevInterval = intervals[0];
             for (int i = 1; i < intervals.Count; i++)
             {
                 FaceInterval<F> interval = intervals[i];
@@ -542,17 +556,8 @@ namespace DefaultNamespace
                             left.IsLeftWall
                         );
                         cutOff.Add(newBoundary);
-
-                        prevInterval.Right = interval.Left = new IntervalBoundary<F>(
-                            left.StartPoint,
-                            point,
-                            left.Source,
-                            left.IsLeftWall
-                        );
                     }
                 }
-
-                prevInterval = interval;
             }
 
             return cutOff;
@@ -611,9 +616,11 @@ namespace DefaultNamespace
         /// <typeparam name="F"></typeparam>
         /// <param name="interval"></param>
         /// <param name="eventQueue"></param>
+        /// <param name="minY"></param>
         public static void CheckIntersections<F>(
             FaceInterval<F> interval,
-            BinarySearchTree<FaceEvent> eventQueue
+            BinarySearchTree<FaceEvent> eventQueue,
+            double minY
         ) where F : SimplePolygon
         {
             if (interval.Left == null || interval.Right == null) return;
@@ -621,9 +628,15 @@ namespace DefaultNamespace
             if (interval.Left.Intersects(interval.Right))
             {
                 Vertex intersect = interval.Left.GetIntersectionPoint(interval.Right);
+                if (intersect.Y < minY)
+                {
+                    // Deals with a situation that can only occur because of rounding errors
+                    intersect.Y = minY;
+                }
+                
+
                 FaceCrossEvent<F> crossEvent = new FaceCrossEvent<F>(interval, intersect);
                 interval.Intersection = crossEvent;
-
                 eventQueue.Insert(crossEvent);
             }
         }
@@ -655,17 +668,19 @@ namespace DefaultNamespace
         /// <param name="scanLine"></param>
         /// <param name="sections"></param>
         /// <param name="eventQueue"></param>
+        /// <param name="eventPoint"></param>
         public static void AddInterval<F>(
             FaceInterval<F> interval,
             BinarySearchTree<FaceInterval<F>> scanLine,
             HashSet<MonotonePolygonSection<F>> sections,
-            BinarySearchTree<FaceEvent> eventQueue
+            BinarySearchTree<FaceEvent> eventQueue,
+            Vertex eventPoint
         ) where F : SimplePolygon
         {
             scanLine.Insert(interval);
             sections.Add(interval.Shape);
 
-            if (interval.Intersection != null) eventQueue.Insert(interval.Intersection);
+            FaceCombiner.CheckIntersections(interval, eventQueue, eventPoint.Y);
         }
 
         /// <summary>

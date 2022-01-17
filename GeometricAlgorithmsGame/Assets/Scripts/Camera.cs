@@ -31,7 +31,7 @@ public class Camera : MonoBehaviour
         get
         {
             var z = this.gameObject.transform.rotation.eulerAngles.z;
-            return z;
+            return z - 90;
         }
     }
 

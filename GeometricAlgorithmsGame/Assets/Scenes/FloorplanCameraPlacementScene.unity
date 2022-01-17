@@ -852,6 +852,7 @@ MonoBehaviour:
   CameraSizeMargin: 1
   FloorplanPrefab: {fileID: 3859917397781596429, guid: cea0a253d7ea0a142ab870595ef78388, type: 3}
   _cameraPrefab: {fileID: 8602978617756517482, guid: f67070665a6adbf4dab583fae36f3c4b, type: 3}
+  _debugFacePrefab: {fileID: 7501643590645518486, guid: c5c676a8670f433458b8f4036f63163f, type: 3}
   _floorplan: {fileID: 3859917397781596429, guid: cea0a253d7ea0a142ab870595ef78388, type: 3}
   _unityCamera: {fileID: 976766841}
   _cameraPlacer: {fileID: 1127957835}
@@ -859,7 +860,6 @@ MonoBehaviour:
   _confirmAllCamerasButton: {fileID: 1240419586}
   _levelXText: {fileID: 216677270}
   _resultScreenManager: {fileID: 614035533}
-  _blueprintSpriteRenderer: {fileID: 1278469756}
 --- !u!4 &1214341130
 Transform:
   m_ObjectHideFlags: 0
@@ -1062,7 +1062,7 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: -196265057
-  m_SortingLayer: -1
+  m_SortingLayer: 0
   m_SortingOrder: 0
   m_Sprite: {fileID: 21300000, guid: c73b340595c260a47b755d2ab15bf415, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
