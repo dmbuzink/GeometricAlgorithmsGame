@@ -146,7 +146,12 @@ public class GameManager : MonoBehaviour
         {
             await this._floorplan.CalculateView();
             float percentage = await this._floorplan.GetPercentageOfFloorplanInView();
-            Debug.Log(percentage);
+            bool isReachable = await this._floorplan.PathExistsFromEntranceToDesiredObject();
+
+            bool win = isReachable && percentage >= 0.8;
+            if (win) this.ShowSuccessScreen();
+            else this.ShowFailureScreen();
+
         }
         catch (Exception e)
         {

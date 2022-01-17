@@ -56,7 +56,7 @@ public class Floorplan : MonoBehaviour
         this._lineRenderer.endWidth = 0.1f;
         this._lineRenderer.startColor = Color.magenta;
         this._lineRenderer.endColor = Color.magenta;
-        //SimplePolygon.Draw(this._lineRenderer);
+        SimplePolygon.Draw(this._lineRenderer);
     }
 
     // Update is called once per frame
@@ -102,7 +102,7 @@ public class Floorplan : MonoBehaviour
         }
 
         List<CombinedFace<SimplePolygon>> combinedFaces = FaceCombiner.CombineFaces(polygons);
-        this.DrawDebugFaces(combinedFaces);
+        //this.DrawDebugFaces(combinedFaces);
         List<string> debugPolygs = combinedFaces.Select<CombinedFace<SimplePolygon>, string>(face =>
                 face.Vertices
                     .Select<Vertex, string>(v => "{x:" + v.X + ", y:" + v.Y + "}")
@@ -176,9 +176,7 @@ public class Floorplan : MonoBehaviour
                 totalArea += area;
                 if (containsCamera) cameraArea += area;
             }
-            Debug.Log(area+" "+containsCamera+" "+containsFloorPlan);
         }
-        Debug.Log(total+" "+totalArea+"  "+ cameraArea+"  ");
 
 
         return (float)(cameraArea / totalArea);
@@ -191,8 +189,17 @@ public class Floorplan : MonoBehaviour
     /// <returns></returns>
     public async Task<bool> PathExistsFromEntranceToDesiredObject()
     {
-        // TODO: To be implemented by Teun van Zon
-        throw new ArgumentException();
+        if (this._regions == null)
+        {
+            throw new Exception("The regions should be calculated first by calling CalculateView");
+        }
+
+        CombinedFace<SimplePolygon> entranceFace = this._regions.FindRegion(this._entrance.Position);
+        CombinedFace<SimplePolygon> valuableFace = this._regions.FindRegion(this._desiredObject.Position);
+        if (entranceFace != valuableFace) return false;
+
+        bool containsCamera = entranceFace.Sources.Find(source => source is CameraFace) != null;
+        return !containsCamera;
     }
 
     /// <summary>
