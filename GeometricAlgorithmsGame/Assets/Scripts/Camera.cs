@@ -31,7 +31,7 @@ public class Camera : MonoBehaviour
         get
         {
             var z = this.gameObject.transform.rotation.eulerAngles.z;
-            return z;
+            return z - 90;
         }
     }
 
@@ -96,7 +96,7 @@ public class Camera : MonoBehaviour
 
 
         //These will cause issues if the the angle of view causes the min/max angle to flip arround 0/360 degrees.
-        double minAngle = (AngleCounterClockwise - _angleOfView / 2) * Mathf.Deg2Rad;  
+        double minAngle = (AngleCounterClockwise - _angleOfView / 2) * Mathf.Deg2Rad;
         double maxAngle = (AngleCounterClockwise + _angleOfView / 2) * Mathf.Deg2Rad; 
 
         //If the angle > Pi, then we subtract 2 pi to make it consistent with the angles of the events which go from -pi to pi instead of pi-2pi
