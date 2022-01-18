@@ -14,7 +14,8 @@ public class Entrance : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        
+        Vector3 pos = this.gameObject.transform.position;
+        this.Position = new Vertex(pos.x, pos.y);
     }
 
     // Update is called once per frame

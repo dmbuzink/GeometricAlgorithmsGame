@@ -41,7 +41,7 @@ public class Vertex
     /// <param name="v"></param>
     /// <returns></returns>
     public bool SamePositionAs(Vertex v) => 
-        Math.Abs(this.X - v.X) < Mathf.Epsilon && Math.Abs(this.Y - v.Y) < Mathf.Epsilon;
+        Math.Abs(this.X - v.X) <= Mathf.Epsilon && Math.Abs(this.Y - v.Y) <= Mathf.Epsilon;
 
     /// <summary>
     /// Returns true if the vertices are completely identical

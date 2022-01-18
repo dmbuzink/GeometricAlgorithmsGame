@@ -115,7 +115,7 @@ public class SimplePolygon : IEnumerable<Vertex>
             this._minX.Value,
             this._maxX.Value,
             this._minY.Value,
-            this._maxX.Value
+            this._maxY.Value
         );
     }
 

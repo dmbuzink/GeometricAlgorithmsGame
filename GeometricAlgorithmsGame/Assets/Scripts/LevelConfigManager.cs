@@ -28,7 +28,20 @@ namespace DefaultNamespace
         {
             var entrance = new Vertex(11.7, 7);
             var desiredObject = new Vertex(5.1, 5);
-        
+
+            //var v1 = new Vertex(1, 1);
+            //var v2 = new Vertex(7, 1);
+            //var v3 = new Vertex(7, 7);
+            //var v4 = new Vertex(1, 7);
+
+            //return new LevelConfig()
+            //{
+            //    LevelId = 0,
+            //    Entrance = entrance,
+            //    DesiredObject = desiredObject,
+            //    Vertices = new[] { v1, v2, v3, v4 }
+            //};
+
             var v1 = new Vertex(1, 1);
             var v2 = new Vertex(2, 2);
             var v3 = new Vertex(1.5, 3);

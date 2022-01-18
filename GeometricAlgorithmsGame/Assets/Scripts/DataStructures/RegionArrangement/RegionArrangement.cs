@@ -7,7 +7,7 @@ namespace DefaultNamespace
     public class RegionArrangement<T> where T: SimplePolygon
     {
         private List<T> Regions { get; set; }
-        private VerticalDecomposition<PolygonSegment<T>> Decomposition { get; set; }
+        public VerticalDecomposition<PolygonSegment<T>> Decomposition { get; set; }
 
         private RegionArrangement(List<T> regions)
         {

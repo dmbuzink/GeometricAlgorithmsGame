@@ -16,7 +16,10 @@ public class Floorplan : MonoBehaviour
     public FloorFace SimplePolygon;
     [SerializeField] private DesiredObject _desiredObject;
     [SerializeField] private Entrance _entrance;
-    private LineRenderer _lineRenderer;
+    private LineRenderer _lineRenderer; 
+    
+    public DebugFace _debugFacePrefab;
+    public List<DebugFace> _debugFaces = new List<DebugFace>();
 
     public Floorplan(FloorFace simplePolygon, DesiredObject desiredObject, Entrance entrance)
     {
@@ -76,7 +79,7 @@ public class Floorplan : MonoBehaviour
     /// </summary>
     public async Task CalculateView()
     {
-        float outerPadding = 100;
+        float outerPadding = 1;
         (float minX, float maxX, float minY, float maxY) = this.SimplePolygon.GetBoundingBox();
         List<Vertex> outerPoints = new List<Vertex>(new[]
         {
@@ -95,12 +98,55 @@ public class Floorplan : MonoBehaviour
         foreach(Camera camera in this.Cameras)
         {
             CameraFace view = camera.cameraView;
-            if(view!=null) polygons.Add(view);
+            if (view != null) polygons.Add(view);
         }
 
         List<CombinedFace<SimplePolygon>> combinedFaces = FaceCombiner.CombineFaces(polygons);
+        //this.DrawDebugFaces(combinedFaces);
+        List<string> debugPolygs = combinedFaces.Select<CombinedFace<SimplePolygon>, string>(face =>
+                face.Vertices
+                    .Select<Vertex, string>(v => "{x:" + v.X + ", y:" + v.Y + "}")
+                    .Aggregate((s, v) => s + "," + v)
+            ).ToList();
 
         _regions = await RegionArrangement<CombinedFace<SimplePolygon>>.CreateRegionArrangement(combinedFaces);
+        //this.DrawDebugTrapezoids();
+        
+       
+    }
+
+    public void DrawDebugFaces(List<CombinedFace<SimplePolygon>> newFaces)
+    {
+        foreach (DebugFace dbgFace in _debugFaces)
+        {
+            Destroy(dbgFace.gameObject);
+        }
+
+        _debugFaces.Clear();
+
+        foreach (CombinedFace<SimplePolygon> face in newFaces)
+        {
+            var newDebugFace = Instantiate(this._debugFacePrefab);
+            _debugFaces.Add(newDebugFace);
+            newDebugFace.Source = face;
+        }
+    }
+
+    public void DrawDebugTrapezoids()
+    {
+        List<Trapezoid<PolygonSegment<CombinedFace<SimplePolygon>>>> trapezoids = new List<Trapezoid<PolygonSegment<CombinedFace<SimplePolygon>>>>();
+        _regions.Decomposition.Root.GetTrapezoids(trapezoids);
+        List<CombinedFace<SimplePolygon>> trapezoidPolys = new List<CombinedFace<SimplePolygon>>();
+        foreach (var t in trapezoids)
+        {
+            SimplePolygon sp = t.CalculatePolygon();
+            if (sp == null) continue;
+            trapezoidPolys.Add(new CombinedFace<SimplePolygon>(new List<SimplePolygon>(new SimplePolygon[]
+            {
+                sp
+            }), sp.Vertices));
+        }
+        DrawDebugFaces(trapezoidPolys);
     }
 
     /// <summary>
@@ -117,17 +163,21 @@ public class Floorplan : MonoBehaviour
         Dictionary<CombinedFace<SimplePolygon>, double> areas = this._regions.CalculateAreas();
         double totalArea = 0;
         double cameraArea = 0;
+        double total = 0;
 
         foreach(CombinedFace<SimplePolygon> region in areas.Keys)
         {
             double area = areas[region];
+            total += area;
             bool containsCamera = region.Sources.Find(source => source is CameraFace) != null;
             bool containsFloorPlan = region.Sources.Find(source => source is FloorFace) != null;
-            if (containsCamera) cameraArea += area;
-            if (containsFloorPlan) totalArea += area;
-            Debug.Log(area +" "+ containsFloorPlan + " "+containsCamera);
+            if(containsFloorPlan)
+            {
+                totalArea += area;
+                if (containsCamera) cameraArea += area;
+            }
         }
-        Debug.Log(totalArea+"  "+ cameraArea);
+
 
         return (float)(cameraArea / totalArea);
     }
@@ -139,8 +189,17 @@ public class Floorplan : MonoBehaviour
     /// <returns></returns>
     public async Task<bool> PathExistsFromEntranceToDesiredObject()
     {
-        // TODO: To be implemented by Teun van Zon
-        throw new ArgumentException();
+        if (this._regions == null)
+        {
+            throw new Exception("The regions should be calculated first by calling CalculateView");
+        }
+
+        CombinedFace<SimplePolygon> entranceFace = this._regions.FindRegion(this._entrance.Position);
+        CombinedFace<SimplePolygon> valuableFace = this._regions.FindRegion(this._desiredObject.Position);
+        if (entranceFace != valuableFace) return false;
+
+        bool containsCamera = entranceFace.Sources.Find(source => source is CameraFace) != null;
+        return !containsCamera;
     }
 
     /// <summary>

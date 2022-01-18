@@ -10,6 +10,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private float CameraSizeMargin;
     [SerializeField] private Floorplan FloorplanPrefab;
     [SerializeField] private Camera _cameraPrefab;
+    [SerializeField] private DebugFace _debugFacePrefab;
     [SerializeField] private Floorplan _floorplan;
     [SerializeField] private UnityEngine.Camera _unityCamera;
     [SerializeField] private CameraPlacer _cameraPlacer;
@@ -53,6 +54,9 @@ public class GameManager : MonoBehaviour
             _levelConfig.Entrance);
         _cameraPlacer.SetFloorplan(_floorplan);
         this._floorplan.OnAmountOfCamerasChanged += HandleAmountOfCamerasChanged;
+
+        // TODO: remove after testing
+        this._floorplan._debugFacePrefab = this._debugFacePrefab;
     }
 
     /// <summary>
@@ -138,13 +142,15 @@ public class GameManager : MonoBehaviour
     /// </summary>
     private async Task ConfirmAllCamerasAsync()
     {
-        Debug.Log("Oof");
-        await this._floorplan.CalculateView();
-        Debug.Log("Shit");
         try
         {
+            await this._floorplan.CalculateView();
             float percentage = await this._floorplan.GetPercentageOfFloorplanInView();
-            Debug.Log(percentage);
+            bool isReachable = await this._floorplan.PathExistsFromEntranceToDesiredObject();
+
+            bool win = isReachable && percentage >= 0.8;
+            if (win) this.ShowSuccessScreen();
+            else this.ShowFailureScreen();
 
         }
         catch (Exception e)
