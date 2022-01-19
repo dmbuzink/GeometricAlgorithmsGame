@@ -115,7 +115,7 @@ namespace DefaultNamespace
         /// <returns></returns>
         public SimplePolygon CalculatePolygon()
         {
-            double fb = 10;
+            double fb = 100; // Arbitrary value, should be larger than all real coordinates
             double leftX = this.Left?.X ?? -fb;
             double rightX = this.Right?.X ?? fb;
             double topLeftY = this.Top == null ? fb : this.GetYCoordinate(leftX, this.Top);

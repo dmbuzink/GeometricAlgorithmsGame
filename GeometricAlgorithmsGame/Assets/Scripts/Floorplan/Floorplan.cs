@@ -21,6 +21,11 @@ public class Floorplan : MonoBehaviour
     public DebugFace _debugFacePrefab;
     public List<DebugFace> _debugFaces = new List<DebugFace>();
 
+    // Debug rendering variables
+    private List<CombinedFace<SimplePolygon>> combinedFaces;
+    private DebugRenderingMode debugMode = DebugRenderingMode.None;
+    private int debugIndex = -1;
+
     public Floorplan(FloorFace simplePolygon, DesiredObject desiredObject, Entrance entrance)
     {
         this.SimplePolygon = simplePolygon;
@@ -101,53 +106,21 @@ public class Floorplan : MonoBehaviour
             if (view != null) polygons.Add(view);
         }
 
-        List<CombinedFace<SimplePolygon>> combinedFaces = FaceCombiner.CombineFaces(polygons);
-        //this.DrawDebugFaces(combinedFaces);
-        List<string> debugPolygs = combinedFaces.Select<CombinedFace<SimplePolygon>, string>(face =>
-                face.Vertices
-                    .Select<Vertex, string>(v => "{x:" + v.X + ", y:" + v.Y + "}")
-                    .Aggregate((s, v) => s + "," + v)
-            ).ToList();
-
-        _regions = await RegionArrangement<CombinedFace<SimplePolygon>>.CreateRegionArrangement(combinedFaces);
-        //this.DrawDebugTrapezoids();
+        this.combinedFaces = FaceCombiner.CombineFaces(polygons);
         
-       
+        //// Debugging data
+        //List<string> debugPolygs = this.combinedFaces.Select<CombinedFace<SimplePolygon>, string>(face =>
+        //        face.Vertices
+        //            .Select<Vertex, string>(v => "{x:" + v.X + ", y:" + v.Y + "}")
+        //            .Aggregate((s, v) => s + "," + v)
+        //    ).ToList();
+
+        this._regions = await RegionArrangement<CombinedFace<SimplePolygon>>.CreateRegionArrangement(this.combinedFaces);
+
+
+        this.RefreshDebugRendering();
     }
 
-    public void DrawDebugFaces(List<CombinedFace<SimplePolygon>> newFaces)
-    {
-        foreach (DebugFace dbgFace in _debugFaces)
-        {
-            Destroy(dbgFace.gameObject);
-        }
-
-        _debugFaces.Clear();
-
-        foreach (CombinedFace<SimplePolygon> face in newFaces)
-        {
-            var newDebugFace = Instantiate(this._debugFacePrefab);
-            _debugFaces.Add(newDebugFace);
-            newDebugFace.Source = face;
-        }
-    }
-
-    public void DrawDebugTrapezoids()
-    {
-        List<Trapezoid<PolygonSegment<CombinedFace<SimplePolygon>>>> trapezoids = new List<Trapezoid<PolygonSegment<CombinedFace<SimplePolygon>>>>();
-        _regions.Decomposition.Root.GetTrapezoids(trapezoids);
-        List<CombinedFace<SimplePolygon>> trapezoidPolys = new List<CombinedFace<SimplePolygon>>();
-        foreach (var t in trapezoids)
-        {
-            SimplePolygon sp = t.CalculatePolygon();
-            if (sp == null) continue;
-            trapezoidPolys.Add(new CombinedFace<SimplePolygon>(new List<SimplePolygon>(new SimplePolygon[]
-            {
-                sp
-            }), sp.Vertices));
-        }
-        DrawDebugFaces(trapezoidPolys);
-    }
 
     /// <summary>
     /// Calculates the the percentage of the floorplan that is viewed by atleast one camera.
@@ -220,5 +193,112 @@ public class Floorplan : MonoBehaviour
     {
         this.Cameras.Remove(cam);
         this.OnAmountOfCamerasChanged?.Invoke(this.Cameras.Count);
+    }
+
+    // Debug scripts
+    void OnGUI()
+    {
+        Event e = Event.current;
+        if (e.isKey && e.type==EventType.KeyUp)
+        {
+            if(e.keyCode==KeyCode.D)
+            {
+                if (this.debugMode == DebugRenderingMode.None)
+                    this.debugMode = DebugRenderingMode.Faces;
+                else if (this.debugMode == DebugRenderingMode.Faces)
+                    this.debugMode = DebugRenderingMode.Trapezoids;
+                else this.debugMode = DebugRenderingMode.None;
+                this.debugIndex = -1;
+                this.CalculateView();
+            }
+            if (e.keyCode == KeyCode.S)
+            {
+                this.debugIndex += 1;
+                this.CalculateView();
+            }
+        }
+    }
+
+    public void RefreshDebugRendering()
+    {
+        if(this.debugMode==DebugRenderingMode.None)
+        {
+            this.DrawDebugFaces(new List<CombinedFace<SimplePolygon>>());
+        } else if(this.debugMode==DebugRenderingMode.Faces)
+        {
+            if(this.combinedFaces!=null && this.combinedFaces.Count>0)
+            {
+                if(this.debugIndex==-1)
+                    this.DrawDebugFaces(this.combinedFaces);
+                else
+                {
+                    CombinedFace<SimplePolygon> face = this.combinedFaces[this.debugIndex % this.combinedFaces.Count];
+                    this.DrawDebugFaces(new List<CombinedFace<SimplePolygon>>() { face });
+                }
+            }
+            else
+            {
+                this.DrawDebugFaces(new List<CombinedFace<SimplePolygon>>());
+            }
+        } else
+        {
+            if(this._regions!=null)
+            {
+                this.DrawDebugTrapezoids(this.debugIndex);
+            } else
+            {
+                this.DrawDebugFaces(new List<CombinedFace<SimplePolygon>>());
+            }
+        }
+
+    }
+
+    public void DrawDebugFaces(List<CombinedFace<SimplePolygon>> newFaces)
+    {
+        foreach (DebugFace dbgFace in _debugFaces)
+        {
+            Destroy(dbgFace.gameObject);
+        }
+
+        _debugFaces.Clear();
+
+        foreach (CombinedFace<SimplePolygon> face in newFaces)
+        {
+            var newDebugFace = Instantiate(this._debugFacePrefab);
+            _debugFaces.Add(newDebugFace);
+            newDebugFace.Source = face;
+        }
+    }
+
+    public void DrawDebugTrapezoids(int index)
+    {
+        List<Trapezoid<PolygonSegment<CombinedFace<SimplePolygon>>>> trapezoids = new List<Trapezoid<PolygonSegment<CombinedFace<SimplePolygon>>>>();
+        _regions.Decomposition.Root.GetTrapezoids(trapezoids);
+
+
+        List<CombinedFace<SimplePolygon>> trapezoidPolys = new List<CombinedFace<SimplePolygon>>();
+        index = index % trapezoids.Count;
+
+        int cIndex = -1;
+        foreach (var t in trapezoids)
+        {
+            cIndex++;
+            SimplePolygon sp = t.CalculatePolygon();
+            if (sp == null) continue;
+
+            if(index==-1 || index==cIndex)
+            trapezoidPolys.Add(new CombinedFace<SimplePolygon>(new List<SimplePolygon>(new SimplePolygon[]
+            {
+                sp
+            }), sp.Vertices));
+        }
+        DrawDebugFaces(trapezoidPolys);
+    }
+
+    enum DebugRenderingMode
+    {
+        None,
+        Faces,
+        Trapezoids
     }
 }
