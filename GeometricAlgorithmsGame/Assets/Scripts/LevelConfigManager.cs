@@ -58,6 +58,7 @@ namespace DefaultNamespace
                 LevelId = 0,
                 Entrance = entrance,
                 DesiredObject = desiredObject,
+                MaxCameras = 3,
                 Vertices = new[] { v10, v9, v8, v7, v6, v5, v4, v3, v2, v1 }
             };
         }
@@ -70,6 +71,7 @@ namespace DefaultNamespace
         public Vertex Entrance { get; set; }
         public Vertex DesiredObject { get; set; }
         public IEnumerable<Vertex> Vertices { get; set; }
+        public int MaxCameras { get; set; }
 
         public FloorFace GetSimplePolygon() => new FloorFace(Vertices);
     }

@@ -33,7 +33,17 @@ public class GameManager : MonoBehaviour
         {
             var camIsValid = await this._floorplan.SimplePolygon.PointIsWithinPolygonAsync(cam.Position);
         };
-        this._cameraPlacer.OnActivityChange += cameraPlacerIsActive => this._addCameraButton.SetActive(!cameraPlacerIsActive);
+        this._cameraPlacer.OnActivityChange += cameraPlacerIsActive =>
+        {
+            if (this._floorplan.Cameras.Count() < _levelConfig.MaxCameras)
+            {
+                this._addCameraButton.SetActive(!cameraPlacerIsActive);
+            }
+            else
+            {
+                this._addCameraButton.SetActive(false);
+            }
+        };
         await SetUnityCamera();
         await InstantiateFloorplan();
     }

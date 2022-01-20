@@ -694,7 +694,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6561047950844436276, guid: 431fd96c787a29b4ab034efea1d15077, type: 3}
       propertyPath: _minimumDistanceToOtherCamera
-      value: 0.5
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7911675272274518536, guid: 431fd96c787a29b4ab034efea1d15077, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.size
@@ -1062,7 +1062,7 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: -196265057
-  m_SortingLayer: 0
+  m_SortingLayer: -1
   m_SortingOrder: 0
   m_Sprite: {fileID: 21300000, guid: c73b340595c260a47b755d2ab15bf415, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
