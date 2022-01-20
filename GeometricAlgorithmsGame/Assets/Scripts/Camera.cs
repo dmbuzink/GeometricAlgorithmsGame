@@ -95,23 +95,9 @@ public class Camera : MonoBehaviour
         }
 
         //These will cause issues if the the angle of view causes the min/max angle to flip arround 0/360 degrees.
-        double minAngle = (AngleCounterClockwise - _angleOfView / 2) * Mathf.Deg2Rad;  
-        double maxAngle = (AngleCounterClockwise + _angleOfView / 2) * Mathf.Deg2Rad;
-        double startAngle = (AngleCounterClockwise + 180) * Mathf.Deg2Rad;
-
-        //If the angle > Pi, then we subtract 2 pi to make it consistent with the angles of the events which go from -pi to pi instead of pi-2pi
-        if (minAngle > Mathf.PI)
-        {
-            minAngle -= 2 * Mathf.PI;
-        }
-        if (maxAngle > Mathf.PI)
-        {
-            maxAngle -= 2 * Mathf.PI;
-        }
-        if (startAngle > Mathf.PI)
-        {
-            startAngle -= 2 * Mathf.PI;
-        }
+        double minAngle = GeometricHelper.AdjustRadToLimits((AngleCounterClockwise - _angleOfView / 2) * Mathf.Deg2Rad);
+        double maxAngle = GeometricHelper.AdjustRadToLimits((AngleCounterClockwise + _angleOfView / 2) * Mathf.Deg2Rad);
+        double startAngle = GeometricHelper.AdjustRadToLimits((AngleCounterClockwise + 180) * Mathf.Deg2Rad);
 
         //We first need a list of all edges
         var edges = floorplan.SimplePolygon
@@ -119,145 +105,69 @@ public class Camera : MonoBehaviour
             .Select(x => new Edge(new PolygonVertex(x.v1.X, x.v1.Y, new List<PolygonVertex>()), new PolygonVertex(x.v2.X, x.v2.Y, new List<PolygonVertex>())));
 
         //Get all vertices, group them on their angle to the camera and sort them on their angle
-        var GroupedVertices = edges
-                .SelectMany(x => new List<Tuple<Vertex, Edge>>() { new Tuple<Vertex, Edge>(x.StartPoint, x), new Tuple<Vertex, Edge>(x.EndPoint, x) })
-                .GroupBy(x => GeometricHelper.AngleBetweenPointsRad(Position, x.Item1))
-                .Select(x => new Tuple<double, List<Tuple<Vertex, Edge>>>(x.Key, x.ToList()))
-                .ToList();
+        IEnumerable<(double angle, List<(Vertex vertex, Edge edge)> vertices)> GroupedVertices = edges
+            .SelectMany(x => new List<(Vertex vertex, Edge edge)>() { (x.StartPoint, x), (x.EndPoint, x) })
+            .GroupBy(x => GeometricHelper.AngleBetweenPointsRad(Position, x.vertex))
+            .Select(x => (x.Key, x.ToList()))
+            .Union(new List<(double angle, List<(Vertex, Edge)> vertices)>()
+            {
+                //Add the min and max angles as events since these should be the first and last vertex of the result
+                (minAngle, new List<(Vertex, Edge)>()),
+                (maxAngle, new List<(Vertex, Edge)>())
+            });
 
-        //Add the min and max angles as events since these should be the first and last vertex of the result
-        GroupedVertices.Add(new Tuple<double, List<Tuple<Vertex, Edge>>>(minAngle, new List<Tuple<Vertex, Edge>>()));
-        GroupedVertices.Add(new Tuple<double, List<Tuple<Vertex, Edge>>>(maxAngle, new List<Tuple<Vertex, Edge>>()));
-
+        //Sort all edges arround the start order in anti clockwise order
         GroupedVertices = GroupedVertices
-            .Where(x => x.Item1 >= startAngle)
-            .OrderBy(x => x.Item1)
-            .Union(GroupedVertices.Where(x => x.Item1 < startAngle)
-            .OrderBy(x => x.Item1))
-            .ToList();
-       
-        EdgeDistanceComparer comparer = new EdgeDistanceComparer(Position);
-        comparer.SetAngle(startAngle);
+            .Where(x => x.angle >= startAngle)
+            .OrderBy(x => x.angle)
+            .Union(GroupedVertices.Where(x => x.angle < startAngle)
+                .OrderBy(x => x.angle)
+             ).ToList();
 
-        SortedSet<Edge> bbst = new SortedSet<Edge>(comparer);
         List<Edge> listbst = new List<Edge>();
-        BinarySearchTree<Edge> tarbst = new BinarySearchTree<Edge>(new Func<Edge, Edge, int>((Edge a, Edge b) => comparer.Compare(a, b)));
-
-        List<Tuple<Vertex, Edge>> bstresult = new List<Tuple<Vertex, Edge>>();
-        List<Tuple<Vertex, Edge>> listbstresult = new List<Tuple<Vertex, Edge>>();
-        List<Tuple<Vertex, Edge>> tarbstResult = new List<Tuple<Vertex, Edge>>();
+        List<Vertex> listbstresult = new List<Vertex>();
 
         //Initialization, find edges that intersect the start of the sweepline, we add these edges to the bst at the start.
-        foreach (var edge in edges)
-        {
-            if (edge.GetAngleIntersection(startAngle, Position) != null)
-            {
-                listbst.Add(edge);
-                bbst.Add(edge);
-                tarbst.Insert(edge);
-            }
-        }
+        listbst.AddRange(edges.Where(x => x.GetAngleIntersection(startAngle, Position) != null));
 
+        //Mark when we passed the minimal camera angle such that we know when to start adding vertices
         bool passedMinAngle = false;
 
         //Second round we actually add vertices to the result at the start and end of each group / angle
-        foreach (var group in GroupedVertices)
+        foreach (var (angle, vertices) in GroupedVertices)
         {
-            double angle = group.Item1;
-            comparer.SetAngle(angle);
-            List<Tuple<Vertex, Edge>> vertices = group.Item2;
+            //Set passedMinAngle to true once we pass it
+            passedMinAngle = passedMinAngle || angle == minAngle;
 
-            if(angle == minAngle)
-            {
-                passedMinAngle = true;
+            AddLeaderToResult(angle);
+            foreach (var (vertex, edge) in vertices.Where(x => !listbst.Remove(x.edge))){
+                listbst.Add(edge);
             }
-
-            if (bbst.Count > 0 && passedMinAngle)
-            {
-                var leader = bbst.Min;
-                var newVertex = leader.GetAngleIntersection(angle, Position);
-                bstresult.Add(new Tuple<Vertex, Edge>(newVertex, leader));
-            }
-
-            if (listbst.Count > 0 && passedMinAngle)
-            {
-                var leader = listbst.OrderBy(x => x.DistanceAt(Position, angle)).First();
-                var newVertex = leader.GetAngleIntersection(angle, Position);
-                listbstresult.Add(new Tuple<Vertex, Edge>(newVertex, leader));
-            }
-
-            if (listbst.Count > 0 && passedMinAngle)
-            {
-                var leader = tarbst.GetMin();
-                var newVertex = leader.GetAngleIntersection(angle, Position);
-                tarbstResult.Add(new Tuple<Vertex, Edge>(newVertex, leader));
-            }
-
-            List<Edge> edgesToAdd = new List<Edge>();
-            List<Edge> edgesToRemove = new List<Edge>();
-
-            foreach (var vertexEdge in vertices)
-            {
-                Edge edge = vertexEdge.Item2;
-                var testedge = listbst.FirstOrDefault(x => x.ToString() == edge.ToString());
-
-                if(testedge == null)
-                {
-                    edgesToAdd.Add(edge);
-                }
-                else
-                {
-                    listbst.Remove(testedge);
-                    if (!bbst.Remove(edge))
-                    {
-                        bbst.Remove(edge);
-                    }
-                    tarbst.Delete(edge);
-                }
-            }
-
-            edgesToAdd.ForEach(x => bbst.Add(x));
-            edgesToAdd.ForEach(x => listbst.Add(x));
-            edgesToAdd.ForEach(x => tarbst.Insert(x));
-
-            if (bbst.Count > 0 && passedMinAngle)
-            {
-                var leader = bbst.Min;
-                var newVertex = leader.GetAngleIntersection(angle, Position);
-                bstresult.Add(new Tuple<Vertex, Edge>(newVertex, leader));
-            }
-
-            if (listbst.Count > 0 && passedMinAngle)
-            {
-                var leader = listbst.OrderBy(x => x.DistanceAt(Position, angle)).First();
-                var newVertex = leader.GetAngleIntersection(angle, Position);
-                listbstresult.Add(new Tuple<Vertex, Edge>(newVertex, leader));
-            }
-
-            if (listbst.Count > 0 && passedMinAngle)
-            {
-                var leader = tarbst.GetMin();
-                var newVertex = leader.GetAngleIntersection(angle, Position);
-                tarbstResult.Add(new Tuple<Vertex, Edge>(newVertex, leader));
-            }
-
-            if (listbst.Count() != tarbst.GetAll().Count())
-            {
-                Console.WriteLine("");
-            }
+            AddLeaderToResult(angle);
 
             //If we just handled group with the maxAngle,
             //we break the loop since further points won't be in the result anyway
-            if (angle == maxAngle)
+            if (angle == maxAngle) break;
+        }
+
+        void AddLeaderToResult(double angle)
+        {
+            if (listbst.Count > 0 && passedMinAngle)
             {
-                break;
+                var newVertex = listbst
+                    .OrderBy(x => x.DistanceAt(Position, angle))
+                    .First()
+                    .GetAngleIntersection(angle, Position);
+
+                if(newVertex != null)
+                {
+                    listbstresult.Add(newVertex);
+                }
             }
         }
 
-        bstresult.Add(new Tuple<Vertex, Edge>(new Vertex(Position.X, Position.Y), null));
-        listbstresult.Add(new Tuple<Vertex, Edge>(new Vertex(Position.X, Position.Y), null));
-        tarbstResult.Add(new Tuple<Vertex, Edge>(new Vertex(Position.X, Position.Y), null));
-        this.cameraView = new SimplePolygon(listbstresult.Where(x => x.Item1 != null).Select(x => x.Item1));
+        listbstresult.Add(new Vertex(Position.X, Position.Y));
+        this.cameraView = new SimplePolygon(listbstresult);
     }
 
     /// <summary>
