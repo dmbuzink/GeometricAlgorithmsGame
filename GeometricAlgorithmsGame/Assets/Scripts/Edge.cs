@@ -10,6 +10,8 @@ namespace DefaultNamespace
         public PolygonVertex StartPoint { get; set; }
         public PolygonVertex EndPoint { get; set; }
 
+        public string stringified => ToString();
+
         public Edge(PolygonVertex startPoint, PolygonVertex endPoint)
         {
             this.StartPoint = startPoint;
@@ -67,5 +69,10 @@ namespace DefaultNamespace
 
             return new Vertex(result.Value.x, result.Value.y);
        }
+
+        public string ToString()
+        {
+            return $"{StartPoint.X}-{StartPoint.Y} -- {EndPoint.X}-{EndPoint.Y}";
+        }
     }
 }

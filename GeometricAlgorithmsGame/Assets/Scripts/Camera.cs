@@ -83,21 +83,21 @@ public class Camera : MonoBehaviour
     public void CalculateView()
     {
         //Somethoe unity just sets it to 0 somehow, manually set it to 90 for now
-        if(_angleOfView == 0)
+        if (_angleOfView == 0)
         {
             _angleOfView = 90;
         }
 
         //Method is sometimes called while the postion is not yet set, just return null for now
-        if(Position == null)
+        if (Position == null)
         {
             throw new NullReferenceException("Position is null");
         }
 
-
         //These will cause issues if the the angle of view causes the min/max angle to flip arround 0/360 degrees.
         double minAngle = (AngleCounterClockwise - _angleOfView / 2) * Mathf.Deg2Rad;  
-        double maxAngle = (AngleCounterClockwise + _angleOfView / 2) * Mathf.Deg2Rad; 
+        double maxAngle = (AngleCounterClockwise + _angleOfView / 2) * Mathf.Deg2Rad;
+        double startAngle = (AngleCounterClockwise + 180) * Mathf.Deg2Rad;
 
         //If the angle > Pi, then we subtract 2 pi to make it consistent with the angles of the events which go from -pi to pi instead of pi-2pi
         if (minAngle > Mathf.PI)
@@ -107,6 +107,10 @@ public class Camera : MonoBehaviour
         if (maxAngle > Mathf.PI)
         {
             maxAngle -= 2 * Mathf.PI;
+        }
+        if (startAngle > Mathf.PI)
+        {
+            startAngle -= 2 * Mathf.PI;
         }
 
         //We first need a list of all edges
@@ -125,84 +129,83 @@ public class Camera : MonoBehaviour
         GroupedVertices.Add(new Tuple<double, List<Tuple<Vertex, Edge>>>(minAngle, new List<Tuple<Vertex, Edge>>()));
         GroupedVertices.Add(new Tuple<double, List<Tuple<Vertex, Edge>>>(maxAngle, new List<Tuple<Vertex, Edge>>()));
 
-        //First sort the vertices with an angle >= the min angle, then add the vertices with a smaller angle in reverse order
-        var testGroupedVertices = GroupedVertices.Where(x => x.Item1 >= minAngle).OrderBy(x => x.Item1).ToList();
-        testGroupedVertices.AddRange(GroupedVertices.Where(x => x.Item1 < minAngle).OrderBy(x => x.Item1));
+        GroupedVertices = GroupedVertices
+            .Where(x => x.Item1 >= startAngle)
+            .OrderBy(x => x.Item1)
+            .Union(GroupedVertices.Where(x => x.Item1 < startAngle)
+            .OrderBy(x => x.Item1))
+            .ToList();
+       
+        EdgeDistanceComparer comparer = new EdgeDistanceComparer(Position);
+        comparer.SetAngle(startAngle);
 
-        //Initialize the bbst NOTE: this currently still just is a list which gets sorted after each operation, obviously not efficient yet.
+        //SortedSet<Edge> bbst = new SortedSet<Edge>(comparer);
+        List<Tuple<Vertex, Edge>> bbstresult = new List<Tuple<Vertex, Edge>>();
         List<Edge> bst = new List<Edge>();
-        List<Vertex> result = new List<Vertex>();
 
         //Initialization, find edges that intersect the start of the sweepline, we add these edges to the bst at the start.
         foreach (var edge in edges)
         {
-            if(edge.GetAngleIntersection(minAngle, Position) != null)
+            if (edge.GetAngleIntersection(startAngle, Position) != null)
             {
                 bst.Add(edge);
             }
         }
 
-        //Sort the bbst, obviously gets removed once I actually implement a BST
-        bst = bst.OrderBy(x => x.DistanceAt(Position, minAngle)).ToList();
+        bbstresult.Add(new Tuple<Vertex, Edge>(new Vertex(Position.X, Position.Y), null));
 
-        //Add the position of the camera to the result, this is the first (and last part of the polygon)
-        result.Add(new Vertex(Position.X, Position.Y));
-
+        bool passedMinAngle = false;
 
         //Second round we actually add vertices to the result at the start and end of each group / angle
-        foreach(var group in testGroupedVertices)
+        foreach (var group in GroupedVertices)
         {
             double angle = group.Item1;
+            comparer.SetAngle(angle);
             List<Tuple<Vertex, Edge>> vertices = group.Item2;
 
-            //Add the current leader at the start of a group
-            //Only if the sweepline is within the viewing angle of the camera
-            if (bst.Count > 0)
+            if(angle == minAngle)
             {
-                var newVertex = bst.First().GetAngleIntersection(angle, Position);
-                if (result == null || (newVertex != null && !result.Last().SamePositionAs(newVertex)))
-                {
-                    result.Add(newVertex);
-                }
+                passedMinAngle = true;
+            }
+
+            if (bst.Count > 0 && passedMinAngle)
+            {
+                var leader = bst.OrderBy(x => x.DistanceAt(Position, angle)).First();
+                var newVertex = leader.GetAngleIntersection(angle, Position);
+                bbstresult.Add(new Tuple<Vertex, Edge>(newVertex, bst.OrderBy(x => x.DistanceAt(Position, angle)).First()));
             }
 
             foreach (var vertexEdge in vertices)
             {
                 Edge edge = vertexEdge.Item2;
+                var testedge = bst.FirstOrDefault(x => x.ToString() == edge.ToString());
 
-                var edgeToRemove = bst.FirstOrDefault(x => x.StartPoint.X == edge.StartPoint.X &&
-                    x.StartPoint.Y == edge.StartPoint.Y &&
-                    x.EndPoint.X == edge.EndPoint.X 
-                    && x.EndPoint.Y == edge.EndPoint.Y);
-
-                if (!bst.Remove(edgeToRemove))
+                if(testedge == null)
                 {
                     bst.Add(edge);
                 }
+                else
+                {
+                    bst.Remove(testedge);
+                }
             }
 
-            bst = bst.OrderBy(x => x.DistanceAt(Position, angle)).ToList();
-
-            //Again add the current edge in the front, could be the same as the one added at the start
-            //Only if the sweepline is within the viewing angle of the camera
-            if (bst.Count > 0)
+            if (bst.Count > 0 && passedMinAngle)
             {
-                var newVertex = bst.First().GetAngleIntersection(angle, Position);
-                if (result == null || (newVertex != null && !result.Last().SamePositionAs(newVertex)))
-                {
-                    result.Add(newVertex);
-                }
+                var leader = bst.OrderBy(x => x.DistanceAt(Position, angle)).First();
+                var newVertex = leader.GetAngleIntersection(angle, Position);
+                bbstresult.Add(new Tuple<Vertex, Edge>(newVertex, bst.OrderBy(x => x.DistanceAt(Position, angle)).First()));
             }
 
             //If we just handled group with the maxAngle,
             //we break the loop since further points won't be in the result anyway
-            if(angle == maxAngle)
+            if (angle == maxAngle)
             {
                 break;
             }
         }
 
-        this.cameraView = new SimplePolygon(result.Where(x => x != null));
+        this.cameraView = new SimplePolygon(bbstresult.Select(x => x.Item1));
     }
 
     /// <summary>
@@ -221,5 +224,47 @@ public class Camera : MonoBehaviour
     public void SetColliderActive(bool isActive)
     {
         this._selectionCollider.enabled = isActive;
+    }
+}
+
+public class EdgeDistanceComparer : IComparer<Edge>
+{
+    private readonly Vertex camera;
+    private double angle;
+
+    public EdgeDistanceComparer(Vertex camera)
+    {
+        this.camera = camera;
+    }
+
+    public void SetAngle(double angle)
+    {
+        this.angle = angle;
+    }
+
+    public int Compare(Edge a, Edge b)
+    {
+        if (a == null || b == null)
+        {
+            return -1;
+        }
+
+        //Return 0 if they are the same
+        if(a.ToString() == b.ToString())
+        {
+            return 0;
+        }
+
+        double distanceEdge1 = a.DistanceAt(camera, angle);
+        double distanceEdge2 = b.DistanceAt(camera, angle);
+
+        if (distanceEdge1 < distanceEdge2)
+        {
+            return -1;
+        }
+        else
+        {
+            return 1;
+        }
     }
 }
