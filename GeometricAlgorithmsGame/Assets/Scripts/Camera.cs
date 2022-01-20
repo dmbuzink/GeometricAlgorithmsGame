@@ -139,20 +139,24 @@ public class Camera : MonoBehaviour
         EdgeDistanceComparer comparer = new EdgeDistanceComparer(Position);
         comparer.SetAngle(startAngle);
 
-        //SortedSet<Edge> bbst = new SortedSet<Edge>(comparer);
-        List<Tuple<Vertex, Edge>> bbstresult = new List<Tuple<Vertex, Edge>>();
-        List<Edge> bst = new List<Edge>();
+        SortedSet<Edge> bbst = new SortedSet<Edge>(comparer);
+        List<Edge> listbst = new List<Edge>();
+        BinarySearchTree<Edge> tarbst = new BinarySearchTree<Edge>(new Func<Edge, Edge, int>((Edge a, Edge b) => comparer.Compare(a, b)));
+
+        List<Tuple<Vertex, Edge>> bstresult = new List<Tuple<Vertex, Edge>>();
+        List<Tuple<Vertex, Edge>> listbstresult = new List<Tuple<Vertex, Edge>>();
+        List<Tuple<Vertex, Edge>> tarbstResult = new List<Tuple<Vertex, Edge>>();
 
         //Initialization, find edges that intersect the start of the sweepline, we add these edges to the bst at the start.
         foreach (var edge in edges)
         {
             if (edge.GetAngleIntersection(startAngle, Position) != null)
             {
-                bst.Add(edge);
+                listbst.Add(edge);
+                bbst.Add(edge);
+                tarbst.Insert(edge);
             }
         }
-
-        bbstresult.Add(new Tuple<Vertex, Edge>(new Vertex(Position.X, Position.Y), null));
 
         bool passedMinAngle = false;
 
@@ -168,33 +172,78 @@ public class Camera : MonoBehaviour
                 passedMinAngle = true;
             }
 
-            if (bst.Count > 0 && passedMinAngle)
+            if (bbst.Count > 0 && passedMinAngle)
             {
-                var leader = bst.OrderBy(x => x.DistanceAt(Position, angle)).First();
+                var leader = bbst.Min;
                 var newVertex = leader.GetAngleIntersection(angle, Position);
-                bbstresult.Add(new Tuple<Vertex, Edge>(newVertex, bst.OrderBy(x => x.DistanceAt(Position, angle)).First()));
+                bstresult.Add(new Tuple<Vertex, Edge>(newVertex, leader));
             }
+
+            if (listbst.Count > 0 && passedMinAngle)
+            {
+                var leader = listbst.OrderBy(x => x.DistanceAt(Position, angle)).First();
+                var newVertex = leader.GetAngleIntersection(angle, Position);
+                listbstresult.Add(new Tuple<Vertex, Edge>(newVertex, leader));
+            }
+
+            if (listbst.Count > 0 && passedMinAngle)
+            {
+                var leader = tarbst.GetMin();
+                var newVertex = leader.GetAngleIntersection(angle, Position);
+                tarbstResult.Add(new Tuple<Vertex, Edge>(newVertex, leader));
+            }
+
+            List<Edge> edgesToAdd = new List<Edge>();
+            List<Edge> edgesToRemove = new List<Edge>();
 
             foreach (var vertexEdge in vertices)
             {
                 Edge edge = vertexEdge.Item2;
-                var testedge = bst.FirstOrDefault(x => x.ToString() == edge.ToString());
+                var testedge = listbst.FirstOrDefault(x => x.ToString() == edge.ToString());
 
                 if(testedge == null)
                 {
-                    bst.Add(edge);
+                    edgesToAdd.Add(edge);
                 }
                 else
                 {
-                    bst.Remove(testedge);
+                    listbst.Remove(testedge);
+                    if (!bbst.Remove(edge))
+                    {
+                        bbst.Remove(edge);
+                    }
+                    tarbst.Delete(edge);
                 }
             }
 
-            if (bst.Count > 0 && passedMinAngle)
+            edgesToAdd.ForEach(x => bbst.Add(x));
+            edgesToAdd.ForEach(x => listbst.Add(x));
+            edgesToAdd.ForEach(x => tarbst.Insert(x));
+
+            if (bbst.Count > 0 && passedMinAngle)
             {
-                var leader = bst.OrderBy(x => x.DistanceAt(Position, angle)).First();
+                var leader = bbst.Min;
                 var newVertex = leader.GetAngleIntersection(angle, Position);
-                bbstresult.Add(new Tuple<Vertex, Edge>(newVertex, bst.OrderBy(x => x.DistanceAt(Position, angle)).First()));
+                bstresult.Add(new Tuple<Vertex, Edge>(newVertex, leader));
+            }
+
+            if (listbst.Count > 0 && passedMinAngle)
+            {
+                var leader = listbst.OrderBy(x => x.DistanceAt(Position, angle)).First();
+                var newVertex = leader.GetAngleIntersection(angle, Position);
+                listbstresult.Add(new Tuple<Vertex, Edge>(newVertex, leader));
+            }
+
+            if (listbst.Count > 0 && passedMinAngle)
+            {
+                var leader = tarbst.GetMin();
+                var newVertex = leader.GetAngleIntersection(angle, Position);
+                tarbstResult.Add(new Tuple<Vertex, Edge>(newVertex, leader));
+            }
+
+            if (listbst.Count() != tarbst.GetAll().Count())
+            {
+                Console.WriteLine("");
             }
 
             //If we just handled group with the maxAngle,
@@ -205,7 +254,10 @@ public class Camera : MonoBehaviour
             }
         }
 
-        this.cameraView = new SimplePolygon(bbstresult.Select(x => x.Item1));
+        bstresult.Add(new Tuple<Vertex, Edge>(new Vertex(Position.X, Position.Y), null));
+        listbstresult.Add(new Tuple<Vertex, Edge>(new Vertex(Position.X, Position.Y), null));
+        tarbstResult.Add(new Tuple<Vertex, Edge>(new Vertex(Position.X, Position.Y), null));
+        this.cameraView = new SimplePolygon(listbstresult.Where(x => x.Item1 != null).Select(x => x.Item1));
     }
 
     /// <summary>
@@ -244,19 +296,34 @@ public class EdgeDistanceComparer : IComparer<Edge>
 
     public int Compare(Edge a, Edge b)
     {
-        if (a == null || b == null)
+        if (a == null)
         {
-            return -1;
+            return int.MaxValue;
+        }
+
+        if(b == null)
+        {
+            return int.MaxValue;
         }
 
         //Return 0 if they are the same
-        if(a.ToString() == b.ToString())
+        if (AreEqual(a, b))
         {
             return 0;
         }
 
         double distanceEdge1 = a.DistanceAt(camera, angle);
         double distanceEdge2 = b.DistanceAt(camera, angle);
+
+        if(distanceEdge1 == distanceEdge2)
+        {
+            return a.ToString().CompareTo(b.ToString());
+        }
+
+        if(distanceEdge1 == int.MaxValue || distanceEdge2 == int.MaxValue)
+        {
+            return int.MaxValue;
+        }
 
         if (distanceEdge1 < distanceEdge2)
         {
@@ -266,5 +333,11 @@ public class EdgeDistanceComparer : IComparer<Edge>
         {
             return 1;
         }
+    }
+
+    public bool AreEqual(Edge a, Edge b)
+    {
+        return (a.StartPoint.SamePositionAs(b.StartPoint)  &&
+             a.EndPoint.SamePositionAs(b.EndPoint));
     }
 }

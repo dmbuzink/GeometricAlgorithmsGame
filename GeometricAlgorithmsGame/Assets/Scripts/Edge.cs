@@ -36,6 +36,26 @@ namespace DefaultNamespace
             }
             catch(Exception ex)
             {
+                //should not happen, but is rounding error,
+                //take the closest point of the edge (start or end) to the current angle, and return that distance
+                //var startpointangle = GeometricHelper.AngleBetweenPointsRad(camera, StartPoint);
+                //var endpointangle = GeometricHelper.AngleBetweenPointsRad(camera, EndPoint);
+
+                //Vertex closestPoint;
+
+                //if(Math.Abs(angle - startpointangle) < Math.Abs(angle - endpointangle))
+                //{
+                //    closestPoint = StartPoint;
+                //}
+                //else
+                //{
+                //    closestPoint = EndPoint;
+                //}
+
+                //double xdistance = closestPoint.X - camera.X;
+                //double ydistance = closestPoint.Y - camera.Y;
+                //return Math.Sqrt(xdistance * xdistance + ydistance * ydistance);
+
                 //Should not happen
                 return double.MaxValue;
             }
