@@ -1,5 +1,9 @@
 
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using UnityEngine;
+using Debug = UnityEngine.Debug;
 
 namespace DefaultNamespace
 {
@@ -23,6 +27,24 @@ namespace DefaultNamespace
             this.Right = right;
             this.Top = top;
             this.Bottom = bottom;
+
+            // Below invariants tests help debugging
+            if (this.Left!=null)
+            {
+                double lx = this.Left.X;
+                if (this.Top!=null && this.Top.StartPoint.X > lx && this.Top.EndPoint.X > lx)
+                    Debug.Log("Trapezoid error 1");
+                if (this.Bottom != null && this.Bottom.StartPoint.X > lx && this.Bottom.EndPoint.X > lx)
+                    Debug.Log("Trapezoid error 2");
+            }
+            if (this.Right != null)
+            {
+                double rx = this.Right.X;
+                if (this.Top != null && this.Top.StartPoint.X < rx && this.Top.EndPoint.X < rx)
+                    Debug.Log("Trapezoid error 3");
+                if (this.Bottom != null && this.Bottom.StartPoint.X < rx && this.Bottom.EndPoint.X < rx)
+                    Debug.Log("Trapezoid error 4");
+            }
         }
         public override Trapezoid<T> FindTrapezoid(Vertex point)
         {
@@ -47,7 +69,8 @@ namespace DefaultNamespace
         
         public override void GetTrapezoids(List<Trapezoid<T>> trapezoids)
         {
-            trapezoids.Add(this);
+            if(!trapezoids.Contains(this))
+                trapezoids.Add(this);
         }
 
         /// <summary>
@@ -56,16 +79,25 @@ namespace DefaultNamespace
         /// <returns></returns>
         public double GetArea()
         {
-            double topLeftY = this.GetYCoordinate(this.Left.X, this.Top);
-            double topRightY = this.GetYCoordinate(this.Right.X, this.Top);
-            double bottomLeftY = this.GetYCoordinate(this.Left.X, this.Bottom);
-            double bottomRightY = this.GetYCoordinate(this.Right.X, this.Bottom);
+            double fb = 10000000000; // Arbitrary value to essentially make trapezoids without boundaries infinitely large
+            double leftX = this.Left?.X ?? -fb;
+            double rightX = this.Right?.X ?? fb;
+            double topLeftY = this.Top == null ? fb : this.GetYCoordinate(leftX, this.Top);
+            double topRightY = this.Top == null ? fb : this.GetYCoordinate(rightX, this.Top);
+            double bottomLeftY = this.Bottom == null ? -fb : this.GetYCoordinate(leftX, this.Bottom);
+            double bottomRightY = this.Bottom == null ? -fb : this.GetYCoordinate(rightX, this.Bottom);
 
             double leftHeight = topLeftY - bottomLeftY;
             double rightHeight = topRightY - bottomRightY;
             double width = Right.X - Left.X;
 
-            double area = width * (leftHeight + rightHeight) / 2; 
+            double area = width * (leftHeight + rightHeight) / 2;
+
+
+            if (area < 0)
+            {
+                Debug.Log("neg");
+            }
             return area;
         }
 
@@ -75,6 +107,29 @@ namespace DefaultNamespace
             double dy = line.EndPoint.Y - line.StartPoint.Y;
 
             return (x - line.StartPoint.X) / dx * dy + line.StartPoint.Y;
+        }
+
+        /// <summary>
+        /// Retrieves the polygon representing this trapezoid
+        /// </summary>
+        /// <returns></returns>
+        public SimplePolygon CalculatePolygon()
+        {
+            double fb = 100; // Arbitrary value, should be larger than all real coordinates
+            double leftX = this.Left?.X ?? -fb;
+            double rightX = this.Right?.X ?? fb;
+            double topLeftY = this.Top == null ? fb : this.GetYCoordinate(leftX, this.Top);
+            double topRightY = this.Top == null ? fb : this.GetYCoordinate(rightX, this.Top);
+            double bottomLeftY = this.Bottom == null ? -fb : this.GetYCoordinate(leftX, this.Bottom);
+            double bottomRightY = this.Bottom == null ? -fb : this.GetYCoordinate(rightX, this.Bottom);
+
+            return new SimplePolygon(new[]
+            {
+                leftX, bottomLeftY,
+                rightX, bottomRightY,
+                rightX, topRightY,
+                leftX, topLeftY
+            });
         }
     }
 }

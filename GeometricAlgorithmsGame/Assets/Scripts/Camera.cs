@@ -31,12 +31,12 @@ public class Camera : MonoBehaviour
         get
         {
             var z = this.gameObject.transform.rotation.eulerAngles.z;
-            return z;
+            return z - 90;
         }
     }
 
     public Floorplan floorplan { get; set; }
-    private SimplePolygon cameraView { get; set; }
+    public CameraFace cameraView { get; set; }
 
     //Angle of view of the camera, half of it on both sides of the viewing angle.
     [SerializeField] private double _angleOfView = 90;
@@ -165,7 +165,7 @@ public class Camera : MonoBehaviour
         }
 
         listbstresult.Add(new Vertex(Position.X, Position.Y));
-        this.cameraView = new SimplePolygon(listbstresult);
+        this.cameraView = new CameraFace(new List<Camera>(new []{this}), listbstresult);
     }
 
     /// <summary>

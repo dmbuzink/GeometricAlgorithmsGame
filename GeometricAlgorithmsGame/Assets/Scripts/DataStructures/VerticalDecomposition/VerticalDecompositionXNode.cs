@@ -22,7 +22,7 @@ namespace DefaultNamespace
 
         public override Trapezoid<T> FindTrapezoid(Vertex point)
         {
-            if (point.X > this.Point.X || (point.X == this.Point.X && point.Y > this.Point.Y))
+            if (point.X > this.Point.X || (point.X == this.Point.X && point.Y >= this.Point.Y))
             {
                 return this.Right.FindTrapezoid(point);
             }
@@ -35,7 +35,7 @@ namespace DefaultNamespace
         {
             Vertex point = segment.StartPoint;
 
-            if (point.X > this.Point.X || (point.X == this.Point.X && point.Y > this.Point.Y))
+            if (point.X > this.Point.X || (point.X == this.Point.X && point.Y >= this.Point.Y))
             {
                 return this.Right.FindTrapezoid(segment);
             }

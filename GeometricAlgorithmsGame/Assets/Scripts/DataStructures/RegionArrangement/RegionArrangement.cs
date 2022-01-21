@@ -7,14 +7,14 @@ namespace DefaultNamespace
     public class RegionArrangement<T> where T: SimplePolygon
     {
         private List<T> Regions { get; set; }
-        private VerticalDecomposition<PolygonSegment<T>> Decomposition { get; set; }
+        public VerticalDecomposition<PolygonSegment<T>> Decomposition { get; set; }
 
         private RegionArrangement(List<T> regions)
         {
             this.Regions = regions;
         }
 
-        protected static async Task<RegionArrangement<T>> CreateRegionArrangement(List<T> regions)
+        public static async Task<RegionArrangement<T>> CreateRegionArrangement(List<T> regions)
         {
             RegionArrangement<T> decomposition = new RegionArrangement<T>(regions);
 
@@ -51,11 +51,21 @@ namespace DefaultNamespace
             Dictionary<T, double> areas = new Dictionary<T, double>();
             foreach (Trapezoid<PolygonSegment<T>> trapezoid in trapezoids)
             {
-                double oldArea = areas[trapezoid.Bottom.Polygon];
-                areas.Add(
-                    trapezoid.Bottom.Polygon,
-                    trapezoid.GetArea() + oldArea
-                );
+                if (trapezoid.Bottom == null) continue;
+                T polygon = trapezoid.Bottom.Polygon;
+
+                if (areas.ContainsKey(polygon))
+                {
+                    double oldArea = areas[polygon];
+                    areas[polygon] = trapezoid.GetArea() + oldArea;
+                }
+                else
+                {
+                    areas.Add(
+                        polygon,
+                        trapezoid.GetArea()
+                    );
+                }
             }
 
             return areas;

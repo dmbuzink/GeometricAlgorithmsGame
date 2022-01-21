@@ -1,7 +1,9 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading.Tasks;
+using Debug = UnityEngine.Debug;
+using Random = System.Random;
 
 namespace DefaultNamespace
 {
@@ -54,6 +56,7 @@ namespace DefaultNamespace
             Trapezoid<T> prevAbove = null;
             Trapezoid<T> prevBelow = null;
 
+            
             for (int i = 0; i < trapezoids.Count; i++)
             {
                 Trapezoid<T> trapezoid = trapezoids[i];
@@ -67,11 +70,11 @@ namespace DefaultNamespace
 
                 bool containsLeft = isFirst && (
                     trapezoid.Left == null
-                    || !edgeLeft.Equals(trapezoid.Left)
+                    || !edgeLeft.SamePositionAs(trapezoid.Left)
                 );
                 bool containsRight = isLast && (
                     trapezoid.Right == null
-                    || !edgeRight.Equals(trapezoid.Right)
+                    || !edgeRight.SamePositionAs(trapezoid.Right)
                 );
 
                 // Based on the position of the trapezoid, create the appropriate replacement trapezoids and link them
@@ -126,6 +129,10 @@ namespace DefaultNamespace
                     );
                 } else if (isLast)
                 {
+                    if (prevBelow == null || prevAbove == null || prev == null)
+                    {
+                        Debug.Log("error");
+                    }
                     below = this.UpdateBelow(
                         prev,
                         prevBelow,
@@ -150,6 +157,10 @@ namespace DefaultNamespace
                 }
                 else
                 {
+                    if (prevBelow == null || prevAbove == null || prev ==null)
+                    {
+                        Debug.Log("error");
+                    }
                     below = this.UpdateBelow(
                         prev,
                         prevBelow,
@@ -186,6 +197,29 @@ namespace DefaultNamespace
                     );
                 this.ReplaceTrapezoidInTree(trapezoid, candidate);
 
+                if (startTrapezoid!=null &&startTrapezoid.RBN == null && startTrapezoid.RTN == null)
+                {
+                    Debug.Log("3");
+                }
+                if (endTrapezoid != null && endTrapezoid.RBN == null && endTrapezoid.RTN == null)
+                {
+                    if (endTrapezoid.Right != null)
+                    {
+                        Debug.Log("4");
+                    }
+                }
+                if (endTrapezoid != null)
+                {
+                    if (above.RBN == null && above.RTN == null)
+                    {
+                        Debug.Log("1");
+                    }
+                    if (below.RBN == null && below.RTN == null)
+                    {
+                        Debug.Log("2");
+                    }
+                }
+
                 // Update the 'previous' pointers
                 prev = trapezoid;
                 prevAbove = above;
@@ -211,11 +245,11 @@ namespace DefaultNamespace
                     trapezoid.Top
                 );
 
-                startTrapezoid.LTN = startTrapezoid.LTN;
+                startTrapezoid.LTN = trapezoid.LTN;
                 startTrapezoid.RTN = above;
                 above.LTN = startTrapezoid;
 
-                startTrapezoid.LBN = startTrapezoid.LBN;
+                startTrapezoid.LBN = trapezoid.LBN;
                 startTrapezoid.RBN = below;
                 below.LBN = startTrapezoid;
 
@@ -255,11 +289,11 @@ namespace DefaultNamespace
                     trapezoid.Top
                 );
 
-                endTrapezoid.RTN = endTrapezoid.RTN;
+                endTrapezoid.RTN = trapezoid.RTN;
                 endTrapezoid.LTN = above;
                 above.RTN = endTrapezoid;
 
-                endTrapezoid.RBN = endTrapezoid.RBN;
+                endTrapezoid.RBN = trapezoid.RBN;
                 endTrapezoid.LBN = below;
                 below.RBN = endTrapezoid;
 
@@ -369,8 +403,19 @@ namespace DefaultNamespace
             Trapezoid<T> prev = start;
             while (prev != null && prev.Right?.X < segment.EndPoint.X)
             {
-                if (segment.GetSideOfPoint(prev.Right) == 1) prev = prev.RTN ?? prev.RBN;
-                else prev = prev.RBN ?? prev.RTN;
+                if (prev.RBN == null) prev = prev.RTN;
+                else if (prev.RTN == null) prev = prev.RBN;
+                else
+                {
+                    int side = segment.GetSideOfPoint(prev.Right);
+                    if (side == 1) prev = prev.RTN;
+                    else if(side==-1) prev = prev.RBN;
+                    else {
+                        bool bottomBelow = segment.GetSideOfPoint(prev.RBN.Right) == 1;
+                        if (bottomBelow) prev = prev.RTN;
+                        else prev = prev.RBN;
+                    }
+                }
 
                 if(prev != null) output.Add(prev);
             }

@@ -10,6 +10,9 @@ public class SimplePolygon : IEnumerable<Vertex>
     public Vertex[] Vertices { get; private set; }
 
     private float? _maxX;
+    private float? _minX;
+    private float? _maxY;
+    private float? _minY;
 
     /// <summary>
     /// Creates a new simple polygon given a list of alternating x and y coordinates
@@ -91,5 +94,42 @@ public class SimplePolygon : IEnumerable<Vertex>
         }
 
         return _maxX.Value;
+    }
+
+    /// <summary>
+    /// Retrieves the bounding box of the polygon
+    /// </summary>
+    /// <returns>minX, maxX, minY, maxY</returns>
+    public (float, float, float, float) GetBoundingBox()
+    {
+        if (this._maxX is null)
+            this._maxX = this.Max(v => v.Xf);
+        if (this._minX is null)
+            this._minX = this.Min(v => v.Xf);
+        if (this._maxY is null)
+            this._maxY = this.Max(v => v.Yf);
+        if (this._minY is null)
+            this._minY = this.Min(v => v.Yf);
+
+        return (
+            this._minX.Value,
+            this._maxX.Value,
+            this._minY.Value,
+            this._maxY.Value
+        );
+    }
+
+    /// <summary>
+    /// Draws this polygon to a given line renderer
+    /// </summary>
+    /// <param name="renderer"></param>
+    public void Draw(LineRenderer renderer)
+    {
+        renderer.positionCount = this.Count();
+        for (var i = 0; i <this.Count(); i++)
+        {
+            var vertex = this.ElementAt(i);
+            renderer.SetPosition(i, vertex.ToVector3());
+        }
     }
 }

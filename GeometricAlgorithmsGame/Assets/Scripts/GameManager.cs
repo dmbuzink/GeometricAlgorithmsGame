@@ -10,6 +10,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private float CameraSizeMargin;
     [SerializeField] private Floorplan FloorplanPrefab;
     [SerializeField] private Camera _cameraPrefab;
+    [SerializeField] private DebugFace _debugFacePrefab;
     [SerializeField] private Floorplan _floorplan;
     [SerializeField] private UnityEngine.Camera _unityCamera;
     [SerializeField] private CameraPlacer _cameraPlacer;
@@ -32,7 +33,17 @@ public class GameManager : MonoBehaviour
         {
             var camIsValid = await this._floorplan.SimplePolygon.PointIsWithinPolygonAsync(cam.Position);
         };
-        this._cameraPlacer.OnActivityChange += cameraPlacerIsActive => this._addCameraButton.SetActive(!cameraPlacerIsActive);
+        this._cameraPlacer.OnActivityChange += cameraPlacerIsActive =>
+        {
+            if (this._floorplan.Cameras.Count() < _levelConfig.MaxCameras)
+            {
+                this._addCameraButton.SetActive(!cameraPlacerIsActive);
+            }
+            else
+            {
+                this._addCameraButton.SetActive(false);
+            }
+        };
         await SetUnityCamera();
         await InstantiateFloorplan();
     }
@@ -53,6 +64,9 @@ public class GameManager : MonoBehaviour
             _levelConfig.Entrance);
         _cameraPlacer.SetFloorplan(_floorplan);
         this._floorplan.OnAmountOfCamerasChanged += HandleAmountOfCamerasChanged;
+
+        // TODO: remove after testing
+        this._floorplan._debugFacePrefab = this._debugFacePrefab;
     }
 
     /// <summary>
@@ -73,10 +87,10 @@ public class GameManager : MonoBehaviour
         // Choose biggest + margin
 
         var halfYRange = (maxY - minY) / 2;
-        const double widthToHeighRatio = 1080f / 1920f;
+        const double widthToHeightRatio = 1080f / 1920f;
         var halfXRange = (maxX - minX) / 2;
 
-        var cameraSize = (float) Math.Max(halfYRange, halfXRange * widthToHeighRatio);
+        var cameraSize = (float) Math.Max(halfYRange, halfXRange * widthToHeightRatio);
         this._unityCamera.gameObject.transform.localPosition = new Vector3( (float)(minX + halfXRange), 
             (float) (minY + halfYRange), -10);
         this._unityCamera.orthographicSize = cameraSize + CameraSizeMargin;
@@ -138,8 +152,21 @@ public class GameManager : MonoBehaviour
     /// </summary>
     private async Task ConfirmAllCamerasAsync()
     {
-        // TODO: To be implemented by Damian M. Buzink
-        throw new NotImplementedException();
+        try
+        {
+            await this._floorplan.CalculateView();
+            float percentage = await this._floorplan.GetPercentageOfFloorplanInView();
+            bool isReachable = await this._floorplan.PathExistsFromEntranceToDesiredObject();
+
+            bool win = isReachable && percentage >= 0.8;
+            if (win) this.ShowSuccessScreen();
+            else this.ShowFailureScreen();
+
+        }
+        catch (Exception e)
+        {
+            Debug.Log(e);
+        }
     }
 
     /// <summary>
