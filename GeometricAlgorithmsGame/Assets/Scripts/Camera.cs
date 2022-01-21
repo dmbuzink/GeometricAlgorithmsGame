@@ -122,7 +122,7 @@ public class Camera : MonoBehaviour
             .OrderBy(x => x.angle)
             .Union(GroupedVertices.Where(x => x.angle < startAngle)
                 .OrderBy(x => x.angle)
-             ).ToList();
+             );
 
         List<Edge> listbst = new List<Edge>();
         List<Vertex> listbstresult = new List<Vertex>();
@@ -154,15 +154,13 @@ public class Camera : MonoBehaviour
         {
             if (listbst.Count > 0 && passedMinAngle)
             {
+                //Add the intersection with the leader to the result
                 var newVertex = listbst
                     .OrderBy(x => x.DistanceAt(Position, angle))
                     .First()
                     .GetAngleIntersection(angle, Position);
 
-                if(newVertex != null)
-                {
-                    listbstresult.Add(newVertex);
-                }
+                listbstresult.Add(newVertex);
             }
         }
 
@@ -186,68 +184,5 @@ public class Camera : MonoBehaviour
     public void SetColliderActive(bool isActive)
     {
         this._selectionCollider.enabled = isActive;
-    }
-}
-
-public class EdgeDistanceComparer : IComparer<Edge>
-{
-    private readonly Vertex camera;
-    private double angle;
-
-    public EdgeDistanceComparer(Vertex camera)
-    {
-        this.camera = camera;
-    }
-
-    public void SetAngle(double angle)
-    {
-        this.angle = angle;
-    }
-
-    public int Compare(Edge a, Edge b)
-    {
-        if (a == null)
-        {
-            return int.MaxValue;
-        }
-
-        if(b == null)
-        {
-            return int.MaxValue;
-        }
-
-        //Return 0 if they are the same
-        if (AreEqual(a, b))
-        {
-            return 0;
-        }
-
-        double distanceEdge1 = a.DistanceAt(camera, angle);
-        double distanceEdge2 = b.DistanceAt(camera, angle);
-
-        if(distanceEdge1 == distanceEdge2)
-        {
-            return a.ToString().CompareTo(b.ToString());
-        }
-
-        if(distanceEdge1 == int.MaxValue || distanceEdge2 == int.MaxValue)
-        {
-            return int.MaxValue;
-        }
-
-        if (distanceEdge1 < distanceEdge2)
-        {
-            return -1;
-        }
-        else
-        {
-            return 1;
-        }
-    }
-
-    public bool AreEqual(Edge a, Edge b)
-    {
-        return (a.StartPoint.SamePositionAs(b.StartPoint)  &&
-             a.EndPoint.SamePositionAs(b.EndPoint));
     }
 }
