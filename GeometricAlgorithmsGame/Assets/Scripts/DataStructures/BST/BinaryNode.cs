@@ -86,59 +86,38 @@ namespace DefaultNamespace
         /// </summary>
         /// <param name="data">The data element to be deleted</param>
         /// <returns>The new node representing this subtree after deletion</returns>
-        public BinaryNode<D> Delete(D data) => DeleteTuple(data).node;
-
-        public (BinaryNode<D> node, bool succeeded) DeleteTuple(D data)
+        public BinaryNode<D> Delete(D data)
         {
             int side = this.compare(data, this.item);
-            bool suc;
-            BinaryNode<D> otherChildNode = null;
 
             BinaryNode<D> newNode;
             if (side < 0)
             {
-                if (this.left == null) return (this, false);
-                (this.left, suc) = this.left.DeleteTuple(data);
+                if (this.left == null) return this;
+                this.left = this.left.Delete(data);
                 newNode = this;
-
-                if (!suc)
-                {
-                    otherChildNode = this.right;
-                }
             }
             else if (side > 0)
             {
-                if (this.right == null) return (this, false);
-                (this.right, suc) = this.right.DeleteTuple(data);
+                if (this.right == null) return this;
+                this.right = this.right.Delete(data);
                 newNode = this;
-
-                if (!suc)
-                {
-                    otherChildNode = this.left;
-                }
             }
             else
             {
-                suc = true;
                 // This node itself should be deleted
                 if (this.left == null) newNode = this.right;
                 else if (this.right == null) newNode = this.left;
                 else
                 {
                     D next = this.right.GetMin();
-                    BinaryNode<D> newRight;
-                    newRight = this.right.DeleteTuple(next).node;
+                    BinaryNode<D> newRight = this.right.Delete(next);
                     newNode = new BinaryNode<D>(next, this.compare, this.left, newRight);
                 }
             }
 
-            if (!suc && otherChildNode != null)
-            {
-                otherChildNode.DeleteTuple(data);
-            }
-
-            if (newNode == null) return (null, false);
-            return (newNode.Rebalance(), suc);
+            if (newNode == null) return null;
+            return newNode.Rebalance();
         }
 
 
