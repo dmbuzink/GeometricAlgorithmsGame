@@ -58,5 +58,9 @@ namespace DefaultNamespace
         /// <returns>The determinant</returns>
         public static double Determinant(Vertex a, Vertex b) =>
             Determinant((a.X, a.Y), (b.X, b.Y));
+
+        //Unity uses angles between -1 and 1 pi, if an angle > pi, subtract 2 pi
+        public static double AdjustRadToLimits(double angle) =>
+            angle > Mathf.PI ? angle - (Mathf.PI * 2) : angle;
     }
 }

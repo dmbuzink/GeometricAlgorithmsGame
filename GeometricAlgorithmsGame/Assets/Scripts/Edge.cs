@@ -9,7 +9,6 @@ namespace DefaultNamespace
     {
         public PolygonVertex StartPoint { get; set; }
         public PolygonVertex EndPoint { get; set; }
-
         public Edge(PolygonVertex startPoint, PolygonVertex endPoint)
         {
             this.StartPoint = startPoint;
@@ -34,7 +33,6 @@ namespace DefaultNamespace
             }
             catch(Exception ex)
             {
-                //Should not happen
                 return double.MaxValue;
             }
         }
