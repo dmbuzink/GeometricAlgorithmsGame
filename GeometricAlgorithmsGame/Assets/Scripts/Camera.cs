@@ -160,7 +160,7 @@ public class Camera : MonoBehaviour
                     .First()
                     .GetAngleIntersection(angle, Position);
 
-                if(newVertex != null) { 
+                if(newVertex != null && (listbstresult.Count == 0 || !listbstresult.Last().SamePositionAs(newVertex))) { 
                     listbstresult.Add(newVertex);
                 }
             }
